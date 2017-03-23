@@ -50,6 +50,6 @@ plt <- ggplot( e ) +
     scale_x_continuous( limits=c(0, quantile(e$mean,0.98))) +
     scale_y_continuous( limits=c(0, quantile(e$var,0.98))) +
     geom_label(data=e_len, x=0, y=Inf, hjust=0, vjust=1, aes(label = paste(len, "cells")))
-ggsave(plt, filename = "data/plots/chromothripsis.500k.q10.mean_var_corr.pdf", width = 10, height=20)
+ggsave(plt, filename = "data/plots/chromothripsis.500k.q10.mean_var_corr.pdf", width = 10, height=8)
 
 
