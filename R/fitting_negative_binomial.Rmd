@@ -1,0 +1,147 @@
+---
+title: "Negative binomials for Watson/Crick counts"
+author: "Sascha Meiers"
+date: "10/4/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+suppressWarnings(library(data.table))
+library(ggplot2)
+library(scales)
+```
+
+Reading some real-life data (1 sample, several cells!)
+
+```{r, echo=T}
+d = fread("gunzip -c ../data/counts/HG00733.100kb.fixedbin.txt.gz")
+```
+```{r}
+d <- d[, cov := w+c]
+```
+
+
+## Getting the p parameter
+
+To estimate $p$, we use the mean/variance relationship of a negative binomial distribution:
+
+$$Var(X) = E(X) \frac{1}{p}$$
+
+I exclude some extreme bins upon their calculation
+
+```{r, echo=T}
+sample = d[cov>0 & cov < 3*mean(cov), 
+           .(mean   = mean(cov), var = var(cov)), 
+           by=.(sample, cell)]
+p = sum(sample$mean * sample$mean) / sum(sample$mean * sample$var)
+```
+```{r, fig.width=4, fig.height=3}
+ggplot(sample) + aes(mean, var) + geom_point() + 
+    geom_abline(intercept = 0, slope = 1/p)
+```
+
+We get $p =$ `r p`.
+
+Then we can fit a negative binomial distribution $NB(p,r)$ to the mean coverage of each cell using this formula:
+
+$$r = E(X)\frac{p}{1-p}$$
+```{r}
+sample <- sample[, r := mean * p /(1-p)]
+```
+
+Here I plot the fitted NBs for all our cells:
+
+```{r, fig.width = 6, fig.height = 4, warning=F}
+xlimit = median(d$cov) + 3*sd(d$cov)
+nb_data = NULL
+for (x in unique(sample$cell)) {
+    r = sample[cell == x,]$r
+    nb_data = rbind(nb_data, data.table(cell = x,
+                                        x = seq(xlimit),
+                                        y = dnbinom(seq(xlimit),r,p)))
+}
+ggplot(d) + aes(cov) + geom_histogram(aes(y=..density..),binwidth=1) + facet_wrap(~cell) + scale_x_continuous(limits = c(0,xlimit)) + geom_label(x=Inf, y=Inf, aes(label=paste("r","=",round(r,2))), data = sample, hjust=1,vjust=1) +
+    geom_line(data = nb_data, aes(x=x,y=y), col="darkorange")
+```
+
+## Watson & Crick separately
+
+We actually want to fit distributions for Watson & Crick counts separately. 
+
+The $r$ parameter is unknown for counts that are expected to be zero (e.g. Watson counts in a CC state). Unfortunately the setting of this parameter is critical, so we will try to estimate it now. Let's first have a look at a typical Watson/Crick distribution:
+
+```{r, fig.width=4, fig.height=2, warning=F}
+ggplot(melt(d[cell=="HG00733_I_004",], c("chrom","start","end"), 
+              measure.vars = c("w","c"))) + aes(value, fill=variable) + 
+    geom_density(alpha=0.33) + 
+    scale_x_continuous(limits = c(0, xlimit)) + 
+    ggtitle("For one cell")
+```
+
+We will try to find the mean counts of those cases where $W \approx 0$ and $C >> 0$ (and vice versa).
+
+To do so, we need to find the minium left of the middle peak in the histogram above.
+
+```{r, fig.width = 6, fig.height=5}
+d_melt <- melt(d,c("cell","chrom","start"), measure.vars = c("w","c"))[value < xlimit,]
+d_hist <- d_melt[, .(hist = .N), by = .(value, variable, cell)]
+d_hist <- d_hist[order(cell, value, variable),]
+d_hist <- merge(d_hist, d_melt[, .(median = median(value)), by=.(cell,variable)])
+d_hist <- d_hist[value <= median,]
+d_hist <- d_hist[, minbin := min(hist), by=.(cell,variable)]
+d_hist <- d_hist[hist == minbin,]
+d_hist <- d_hist[, .(thr = min(value)), by = .(variable, cell)]
+d_melt <- merge(d_melt, d_hist, by = c("variable", "cell") )
+d_zero_mean <- d_melt[value <= thr, .(zero_mean = mean(value)), by = .(variable, cell)]
+melted = melt(d, c("chrom","start","end","cell"), 
+              measure.vars = c("w","c"))
+ggplot(melted) + aes(value, fill=variable, col=variable) + 
+    geom_density(alpha=0.33) + 
+    scale_x_continuous(limits = c(0, xlimit)) + 
+    facet_wrap(~cell) + geom_vline(aes(xintercept = thr, col = variable), data = d_hist) +
+    theme(legend.position = "bottom")
+```
+
+This yields the following "mean" counts:
+
+```{r}
+dcast(d_zero_mean, cell ~ variable, value.var = "zero_mean")
+```
+
+Now we can define the negative binomial models for each cell:
+
+```{r, echo=T}
+# Add parameter r to table:
+e <- merge(d, sample[,.(cell,r)], by="cell")
+# Add parameter zero_mean to table
+e <- merge(e, dcast(d_zero_mean, cell ~ paste0("zero_",variable), value.var = "zero_mean"), by="cell")
+
+# Calculate negative binomials for all bins
+e[, c("nb_WW", "nb_WC", "nb_CC") := .(
+    dnbinom(w, r, p) * dnbinom(c, zero_c, p),
+    dnbinom(w, r/2, p) * dnbinom(c, r/2, p),
+    dnbinom(w, zero_w, p) * dnbinom(c, r, p))]
+
+# determine most probable state:
+e <- e[, max_emission := ifelse(nb_WW > nb_WC, 
+                ifelse(nb_WW > nb_CC, "WW", "CC"), 
+                ifelse(nb_WC > nb_CC, "WC", "CC"))]
+```
+
+
+Finally in this plot we can see whether the classification looks good:
+
+```{r, fig.width = 7, fig.height = 5, warning=F}
+xlimit = median(c(d$w,d$c)) + 3*sd(c(d$w,d$c))
+ggplot(e) + aes(w,c, col = max_emission) + 
+    geom_point(size=0.33,alpha=0.33) + 
+    facet_wrap(~cell) + 
+    scale_x_continuous(limits=c(0,xlimit)) +
+    scale_y_continuous(limits=c(0,xlimit)) +
+    geom_label(x=Inf, y=Inf, aes(label=paste("r","=",round(r,2))), inherit.aes=F, data = sample, hjust=1,vjust=1) +
+    theme(legend.position = "bottom")
+```
