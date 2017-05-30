@@ -33,10 +33,10 @@ for(i in 1:length(regions)){
   ##adjust bin to size of variant
   if(width(roi) < 3000) {bin <- 20}else if(width(roi) > 300000){ bin<-20000}else{bin<- 2000}
 
-  if(length(roi$geno) == 0) { roi$geno<- paste0("roi_", i)} # in case roi file isn't genotyped
-  lab<-paste(as.character(roi$IDs), as.character(roi$GTs))
+  #if(length(roi$geno) == 0) { roi$geno<- paste0("roi_", i)} # in case roi file isn't genotyped
+  #lab<-paste(as.character(roi$IDs), as.character(roi$GTs))
   #plt<- regionPlot_wHapData(composite.data, roi, ID=lab, bin, segD, regionData=region_gr, col_a="grey70", col_b<- "darkorchid4", col_c <- "grey7")
-  plt<- regionPlot_wHapData(composite.data, roi, ID=lab, bin, segD, regionData=regions, col_a="grey70", col_b<- "darkorchid4", col_c <- "grey7")
+  plt<- regionPlot_wHapData(composite.data, roi, ID=paste0("roi_", i), bin, segD, regionData=regions, col_a="grey70", col_b<- "darkorchid4", col_c <- "grey7")
   
   plots[[1+length(plots)]] <- plt
   
