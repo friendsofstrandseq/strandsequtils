@@ -17,10 +17,10 @@ segD$pct <- sd$fracMatch
 ## prepare input data:
 dataset<- "HG00733"
 ## READS to plot > GRanges object with read data
-load(paste0("/Volumes/DISCO/trio_project/COMPOSITE_files/", dataset, "_CompositeFile_haplotag_FULL.Rdata")) # composite.data
+load(paste0("./", dataset, "_StrandseqData_Example.Rdata")) # example.data
 #
 ## ROIs to plot > GRanges list of regions
-load(paste0('/Volumes/DISCO/inversion_comparisons/Results_April2017_Integration/', dataset,'_integratedInversionList.Rdata')) # intInv 
+load(paste0('./', dataset,'_integratedInversionList.Rdata')) # intInv 
 regions<- intInv # inverted region to plot >> May 7
 
 # region_gr<-GRanges(seqnames(intInv), IRanges(start=intInv$innerBP_start, end=intInv$innerBP_end)) # innerBP regions >> May 7
@@ -36,7 +36,7 @@ for(i in 1:length(regions)){
   #if(length(roi$geno) == 0) { roi$geno<- paste0("roi_", i)} # in case roi file isn't genotyped
   #lab<-paste(as.character(roi$IDs), as.character(roi$GTs))
   #plt<- regionPlot_wHapData(composite.data, roi, ID=lab, bin, segD, regionData=region_gr, col_a="grey70", col_b<- "darkorchid4", col_c <- "grey7")
-  plt<- regionPlot_wHapData(composite.data, roi, ID=paste0("roi_", i), bin, segD, regionData=regions, col_a="grey70", col_b<- "darkorchid4", col_c <- "grey7")
+  plt<- regionPlot_wHapData(example.data, roi, ID=paste0("roi_", i), bin, segD, regionData=regions, col_a="grey70", col_b<- "darkorchid4", col_c <- "grey7")
   
   plots[[1+length(plots)]] <- plt
   
