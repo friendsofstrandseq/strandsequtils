@@ -16,7 +16,7 @@ regionPlot_wHapData <- function(read.data, roi, ID="roi", bin, segD, regionData=
   library(ggplot2)
   library(data.table)
   library(hexbin)
-  source('/Volumes/DISCO/Analysis_Code/Plot_ReadDistributions_segD_feb20.R')
+#  source('./Plot_ReadDistributions_segD_feb20.R')
   
   options(warn=-1)
   
@@ -44,13 +44,13 @@ regionPlot_wHapData <- function(read.data, roi, ID="roi", bin, segD, regionData=
     ggtitle(paste0(chr, ":", start(roi), "-", end(roi), " (", prettyNum(width(roi), big.mark=","), " bp)")) + theme_light()
 
   # add ROI locations to inv plot (if more than one ROI is mapped to the area)
- # if(length(regionData) > 1){
+  if(length(regionData) > 1){
   region_roi <-  as.data.table(regionData[seqnames(regionData) == seqnames(roi) & start(regionData) >= startLoc & end(regionData) <= endLoc,])
   p.inv = p.inv + geom_rect(data = region_roi, inherit.aes = F,
                     aes(xmin = start, ymin=4, xmax = end, ymax = 7), 
                     fill = "black", alpha=0.5)+
                     theme(legend.position="none", axis.text.x = element_blank())
-  #}
+  }
   #############################  
   ###  read data PLOTS:  
   # increase binsize for thicker bars!
