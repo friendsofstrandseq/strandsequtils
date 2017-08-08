@@ -1,14 +1,14 @@
 require("ComplexHeatmap")
 require("RColorBrewer")
 
-plotHeatmapSegment2 <- function(dataFrameSegm, log=FALSE) {
+plotHeatmapSegment2 <- function(dataFrameSegm, column=8, log=FALSE) {
   
-  probs <- as.matrix(tab[,c(8:ncol(dataFrame))])
+  probs <- as.matrix(dataFrameSegm[,c(column:ncol(dataFrameSegm))])
   
   colColors <- brewer.pal(n=6, name="Set1")
   names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
   
-  annot1 <- HeatmapAnnotation(df = data.frame(state=dataFrame$types), which = "row", col = list(state = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown")) )
+  annot1 <- HeatmapAnnotation(df = data.frame(state=dataFrameSegm$types), which = "row", col = list(state = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown")) )
   colAnnot.df <- data.frame(type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,3,4,5,6))))
   annot2 <- HeatmapAnnotation(df = colAnnot.df, col=list(type=colColors)) 
   
@@ -23,4 +23,4 @@ plotHeatmapSegment2 <- function(dataFrameSegm, log=FALSE) {
   heat.plt <- annot1 + plt
   heat.plt <- draw(annot1 + plt, row_dend_side = "left", row_sub_title_side = "right")
   return(heat.plt)
-} 
+}  
