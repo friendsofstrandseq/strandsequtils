@@ -40,6 +40,7 @@ source('./getCellStatProbTable.R')
 source('./normalizeProbabilities.R')
 source('./getOneCNprobTable.R')
 source('./Plot_ReadDistributions_Simple.R')
+source('./regularizeProbabilities.R')
 
 args = commandArgs(trailingOnly=TRUE)
 temp = args[1]
@@ -179,7 +180,17 @@ for (i in 1:nrow(cellTypes))
   chrOrder[[i]] = c(which(cellTypes[i,] == "wc"), which(cellTypes[i,] == "ww"), which(cellTypes[i,] == "cc"))
 }
 
-
+# regularization
+nonReghapProbTables = hapProbTables
+nonRegGenotypeProbTables = genotypeProbTables
+for (i in 1:nrow(segmentsCounts))
+{
+  if (! is.null(hapProbTables[[i]]))
+  {
+    hapProbTables[[i]] = regularizeProbTable(hapProbTables[[i]])
+    genotypeProbTables[[i]] = regularizeProbTable(genotypeProbTables[[i]])
+  }
+}
 
 for (i in filterSeg)
 {
