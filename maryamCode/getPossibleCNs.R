@@ -18,7 +18,7 @@ getPossibleCNs = function(segCounts, p, chrCellsDispPars, binLength, alpha)
   
   CNp = getCNprob(totalCount, p, totalR, segLen)
   
-  if (sum(CNp) > 0) # CN < maxCN = 5
+  if (sum(CNp) > 0) # CN <= maxCN = 5
   {
     CN = which(CNp == max(CNp))-1
   }
