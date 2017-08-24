@@ -78,7 +78,7 @@ rule plot_segments:
                 """
 
 
-rule plot_ROC:
+rule calc_ROC:
     input:      bp = "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.txt",
                 sv = "svs/{type}_size{size}_vaf{vaf}.txt"
     output:     pdf = "roc/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.pdf",
