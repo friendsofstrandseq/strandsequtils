@@ -11,6 +11,9 @@ segmentation <- function(d, bp_per_Mb = 0.2, normalize = T)
     assert_that(all(c("chrom","start","end","sample","cell","c","w") %in% colnames(d)))
     n_col = nrow(unique(d[, .(sample,cell)]))
     
+    d = merge(d, d[, .(cell_mean = mean(c+w)), by = .(sample,cell)], by = c("sample","cell"), all.x=T)
+    d = d[, c("c","w") := .(c/cell_mean, w/cell_mean)][]
+
     BKP = list()
     for (chrom_ in unique(d$chrom))
     {
