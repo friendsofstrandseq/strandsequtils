@@ -1,7 +1,17 @@
 plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   probs <- as.matrix(dataFrame[,c(8:ncol(dataFrame))])
   
+  #cluter probs hclust
+  #get order of rows
+  #sort dataFrame rows based on hclust order
+  ord <- order.dendrogram(as.dendrogram(hclust(dist(probs, method = "euclidean"), method = "ward.D")))
+  dataFrame <- dataFrame[ord,]
+  probs <- probs[ord,]
+  
+  dataFrame$cells <- factor(dataFrame$cells, levels=dataFrame$cells)
+  
   tab.long <- melt(dataFrame, id.vars=c('cells', 'types', 'Wcount', 'Ccount','chr'), measure.vars=c("CN0","CN1","CN2","CN3","CN4","CN5","X00","X01","X10","X02","X11","X20","X03","X12","X21","X30","X04","X13","X22","X31","X40","X05","X14","X23","X32","X41","X50"))
+  
   
   heatmap_theme <- theme(
     #legend.position="none",
@@ -19,7 +29,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
     #axis.ticks.x=element_blank()  
   )
   
-  plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=factor(cells), fill=value)) + heatmap_theme
+  plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_continuous(name="")
   
   colColors <- brewer.pal(n=6, name="Set1")
   names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
@@ -61,31 +71,4 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   grid.newpage()
   grid.draw(g)
   
-}  
-
-require("ComplexHeatmap")
-require("RColorBrewer")
-
-plotHeatmapSegment2 <- function(dataFrameSegm, column=8, log=FALSE) {
-  
-  probs <- as.matrix(dataFrameSegm[,c(column:ncol(dataFrameSegm))])
-  
-  colColors <- brewer.pal(n=6, name="Set1")
-  names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
-  
-  annot1 <- HeatmapAnnotation(df = data.frame(state=dataFrameSegm$types), which = "row", col = list(state = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown")) )
-  colAnnot.df <- data.frame(type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,3,4,5,6))))
-  annot2 <- HeatmapAnnotation(df = colAnnot.df, col=list(type=colColors)) 
-  
-  if (log) {
-    probs.log <- log10(probs)
-    probs.log[is.infinite(probs.log)] <- NA
-    plt <- Heatmap(probs.log, name = "Probs", cluster_columns = FALSE, cluster_rows = T, show_row_names = FALSE, top_annotation = annot2)
-  } else {
-    plt <- Heatmap(probs, name = "Probs", cluster_columns = FALSE, cluster_rows = T, show_row_names = FALSE, top_annotation = annot2) 
-  }
-  
-  heat.plt <- annot1 + plt
-  heat.plt <- draw(annot1 + plt, row_dend_side = "left", row_sub_title_side = "right")
-  return(heat.plt)
 }  
