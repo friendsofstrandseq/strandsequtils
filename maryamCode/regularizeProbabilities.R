@@ -3,7 +3,7 @@
 #' @param probTable A non regularized prob table in which every row corresponds to a status and each column corresponds to a single cell
 #' @param regFactor the regularization factor
 
-regularizeProbTable = function(probTable, regFactor = 0.001)
+regularizeProbTable = function(probTable, regFactor = 1e-10)
 {
   newProbTable = probTable
   for (j in 1:ncol(probTable))
