@@ -33,7 +33,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   probs <- probs[ord,]
   
   #sort input data.frame
-  rowIds <- as.numeric(levels(dataFrame$cells))
+  rowIds <- dataFrame$cells
   rowIds <- c(rowIds[which.max(rowIds)], rowIds[-which.max(rowIds)])
   dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
   
