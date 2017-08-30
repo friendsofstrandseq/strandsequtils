@@ -31,7 +31,11 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   ord <- order.dendrogram(as.dendrogram(hclust(dist(probs, method = "euclidean"), method = "ward.D")))
   dataFrame <- dataFrame[ord,]
   probs <- probs[ord,]
-  dataFrame$cells <- factor(dataFrame$cells, levels=dataFrame$cells)
+  
+  #sort input data.frame
+  rowIds <- as.numeric(levels(dataFrame$cells))
+  rowIds <- c(rowIds[which.max(rowIds)], rowIds[-which.max(rowIds)])
+  dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
   
   #tranform wide table format into a long format for plotting
   tab.long <- melt(dataFrame, id.vars=c('cells', 'types', 'Wcount', 'Ccount','chr'), measure.vars=c("CN0","CN1","CN2","CN3","CN4","CN5","X00","X01","X10","X02","X11","X20","X03","X12","X21","X30","X04","X13","X22","X31","X40","X05","X14","X23","X32","X41","X50"))
@@ -51,7 +55,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   )
   
   #plot the main heatmap
-  plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_continuous(name="")
+  plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_gradient(low = "white", high = "red", name="")
   
   #set the theme for description columns
   header_theme <- theme(
