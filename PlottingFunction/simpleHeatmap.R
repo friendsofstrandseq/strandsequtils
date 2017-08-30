@@ -86,7 +86,9 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   header.dummy <- ggplot(data.frame(size=1)) + geom_tile(aes(x=size, y=1), fill='white') + header_theme + theme(legend.position="none")
   
   #plot the right side description column
-  colType.df <- data.frame(ID=dataFrame$types, level=c(1:length(dataFrame$types)))
+  celltypes <- as.character(dataFrame$types)
+  celltypes <- c(celltypes[which(celltypes=='all')], celltypes[-which(celltypes=='all')])
+  colType.df <- data.frame(ID=celltypes, level=c(1:length(celltypes)))
   cellType <- ggplot(colType.df) + geom_tile(aes(x=1, y=factor(level), fill=ID)) + scale_fill_manual(values = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown", 'all'="red")) + header_theme
   
   #extract legends from the plots
