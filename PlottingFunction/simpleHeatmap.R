@@ -1,26 +1,134 @@
-require("ComplexHeatmap")
-require("RColorBrewer")
+#required packages
+library("RColorBrewer")
+library("gtable")
+library("grid")
+library("reshape2")
+library("ggplot2")
+library("gridExtra")
 
-plotHeatmapSegment2 <- function(dataFrameSegm, column=8, log=FALSE) {
+#Helper functions
+getlegend <- function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  legend
+}
+
+setPanelHeights <- function(g, heights){
+  g$heights <- grid:::unit.list(g$heights)
+  id_panels <- unique(g$layout[g$layout$name=="panel", "t"])
+  g$heights[id_panels] <- heights
+  g
+}
+
+#Main heatmap function
+plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
+  probs <- as.matrix(dataFrame[,c(8:ncol(dataFrame))])
   
-  probs <- as.matrix(dataFrameSegm[,c(column:ncol(dataFrameSegm))])
+  #cluter probs hclust
+  #get order of rows
+  #sort dataFrame rows based on hclust order
+  ord <- order.dendrogram(as.dendrogram(hclust(dist(probs, method = "euclidean"), method = "ward.D")))
+  dataFrame <- dataFrame[ord,]
+  probs <- probs[ord,]
   
+  #sort input data.frame
+  rowIds <- dataFrame$cells
+  rowIds <- c(rowIds[which.max(rowIds)], rowIds[-which.max(rowIds)])
+  dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
+  
+  #tranform wide table format into a long format for plotting
+  tab.long <- melt(dataFrame, id.vars=c('cells', 'types', 'Wcount', 'Ccount','chr'), measure.vars=c("CN0","CN1","CN2","CN3","CN4","CN5","X00","X01","X10","X02","X11","X20","X03","X12","X21","X30","X04","X13","X22","X31","X40","X05","X14","X23","X32","X41","X50"))
+  
+  #set theme for the main heatmap
+  heatmap_theme <- theme(
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    plot.background=element_blank(),
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+    plot.margin = unit(c(-0.5,-0.5,-0.5,-0.5),"mm"),
+    legend.margin=margin(t=0, r=0, b=0, l=0, unit="cm"),
+    legend.position="bottom"
+  )
+  
+  #plot the main heatmap
+  plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_gradient(low = "white", high = "red", name="")
+  
+  #set the theme for description columns
+  header_theme <- theme(
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    plot.background=element_blank(),
+    axis.title.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.title.y=element_blank(),
+    axis.ticks.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.length = unit(0,"null"),
+    plot.margin = unit(c(-0.5,-0.5,-0.5,-0.5),"mm"),
+    legend.margin=margin(t=0, r=0, b=0, l=0, unit="cm"),
+    legend.position="bottom"
+  )
+  
+  #set the colors for the upper description row
   colColors <- brewer.pal(n=6, name="Set1")
   names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
+  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,3,4,5,6))))
   
-  annot1 <- HeatmapAnnotation(df = data.frame(state=dataFrameSegm$types), which = "row", col = list(state = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown")) )
-  colAnnot.df <- data.frame(type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,3,4,5,6))))
-  annot2 <- HeatmapAnnotation(df = colAnnot.df, col=list(type=colColors)) 
+  #plot the upper description row 
+  header <- ggplot(colAnnot.df) + geom_tile(aes(x=ID, y=1, fill=type)) + scale_fill_manual(values = colColors) + header_theme + guides(fill = guide_legend(nrow = 1))
+  header.dummy <- ggplot(data.frame(size=1)) + geom_tile(aes(x=size, y=1), fill='white') + header_theme + theme(legend.position="none")
   
-  if (log) {
-    probs.log <- log10(probs)
-    probs.log[is.infinite(probs.log)] <- NA
-    plt <- Heatmap(probs.log, name = "Probs", cluster_columns = FALSE, cluster_rows = T, show_row_names = FALSE, top_annotation = annot2)
-  } else {
-    plt <- Heatmap(probs, name = "Probs", cluster_columns = FALSE, cluster_rows = T, show_row_names = FALSE, top_annotation = annot2) 
-  }
+  #plot the right side description column
+  celltypes <- as.character(dataFrame$types)
+  celltypes <- c(celltypes[which(celltypes=='all')], celltypes[-which(celltypes=='all')])
+  colType.df <- data.frame(ID=celltypes, level=c(1:length(celltypes)))
+  cellType <- ggplot(colType.df) + geom_tile(aes(x=1, y=factor(level), fill=ID)) + scale_fill_manual(values = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown", 'all'="red")) + header_theme
   
-  heat.plt <- annot1 + plt
-  heat.plt <- draw(annot1 + plt, row_dend_side = "left", row_sub_title_side = "right")
-  return(heat.plt)
+  #extract legends from the plots
+  plt.leg <- getlegend(plt)
+  header.leg <- getlegend(header)
+  cellType.leg <- getlegend(cellType)
+  
+  #organize plots into a single row
+  legends <- cbind(plt.leg, header.leg, cellType.leg)
+  
+  #remove legends from the plots
+  plt <-  plt + theme(legend.position='none')
+  header <- header + theme(legend.position='none')
+  cellType <- cellType + theme(legend.position='none')
+  
+  #extract ggplot table
+  g1 <- ggplotGrob(header)
+  g2 <- ggplotGrob(header.dummy)
+  g3 <- ggplotGrob(plt)
+  g4 <- ggplotGrob(cellType)
+  
+  #connect plot components by row
+  g.col1 <- rbind(g1, g3, size = "last")
+  g.col2 <- rbind(g2, g4, size = "last")
+  
+  #set the relative heigth of plot elements
+  g.col1 <- setPanelHeights(g.col1, unit.c(unit(1,"line"), unit(nrow(g3),"line")))
+  g.col2 <- setPanelHeights(g.col2, unit.c(unit(1,"line"), unit(nrow(g4),"line")))
+  
+  #bind plot columns into a plot matrix
+  g.matrix <- cbind(g.col1, g.col2)
+  
+  #set relative widths of the final plot matrix
+  g.matrix$widths[c(4,11)] <- unit.c(unit(ncol(g3),"null"), unit(1, "line")) 
+  
+  #add legend rows at the bottom of the final plot
+  final.plot <- arrangeGrob(g.matrix, legends, ncol = 1)
+  #set the position of the legend
+  final.plot$heights <- unit.c(unit(14,"line"), unit(1, "line")) 
+  
+  grid.newpage()
+  grid.draw(final.plot)
 }  

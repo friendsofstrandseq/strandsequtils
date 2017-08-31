@@ -9,6 +9,8 @@ library(GenomicRanges)
 library(MASS)
 library(IRanges)
 library(stringr)
+library(grid)
+library(RColorBrewer)
 
 source('./WCcount.R')
 source('./readBams.R')
