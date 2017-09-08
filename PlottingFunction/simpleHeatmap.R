@@ -22,7 +22,17 @@ setPanelHeights <- function(g, heights){
 }
 
 #Main heatmap function
-plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F) {
+plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F, CNV=3) {
+  #get rid of leading X character after reading data in
+  colnames(dataFrame) <- gsub(colnames(dataFrame), pattern = 'X', replacement = '')
+  
+  #Filter probs for certain CNVs
+  probs.names <- colnames(dataFrame[14:ncol(dataFrame)])
+  probs.names.l <- sapply(probs.names, function(x) strsplit(x, ''))
+  probs.names.cnv <- sapply(probs.names.l, function(x) sum(as.numeric(x)))
+  probs2filt <- names(probs.names.cnv[probs.names.cnv > CNV])
+  dataFrame <- dataFrame[,!colnames(dataFrame) %in% probs2filt]
+  
   probs <- as.matrix(dataFrame[,c(8:ncol(dataFrame))])
   
   #cluter probs hclust
@@ -85,7 +95,9 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F)
   #set the colors for the upper description row
   colColors <- brewer.pal(n=6, name="Set1")
   names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
-  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,6,10,19,28))))
+  CNV.states <- rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), table(probs.names.cnv))
+  CNV.states <- CNV.states[gsub(CNV.states, pattern = 'CN', replacement = '') <= CNV]
+  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c("CN0","CN1","CN2","CN3","CN4","CN5", CNV.states))
   
   #plot the upper description row 
   header <- ggplot(colAnnot.df) + geom_tile(aes(x=ID, y=1, fill=type)) + scale_fill_manual(values = colColors) + header_theme + guides(fill = guide_legend(nrow = 1))
