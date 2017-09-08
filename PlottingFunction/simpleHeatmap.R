@@ -22,7 +22,7 @@ setPanelHeights <- function(g, heights){
 }
 
 #Main heatmap function
-plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
+plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F) {
   probs <- as.matrix(dataFrame[,c(8:ncol(dataFrame))])
   
   #cluter probs hclust
@@ -34,11 +34,16 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   
   #sort input data.frame
   rowIds <- dataFrame$cells
-  rowIds <- c(rowIds[which.max(rowIds)], rowIds[-which.max(rowIds)])
-  dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
-  
+  if (aggProbs) {
+    rowIds <- c(rowIds[which.max(rowIds)], rowIds[-which.max(rowIds)])
+    dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
+  } else {
+    dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
+  }
+
   #tranform wide table format into a long format for plotting
-  tab.long <- melt(dataFrame, id.vars=c('cells', 'types', 'Wcount', 'Ccount','chr'), measure.vars=c("CN0","CN1","CN2","CN3","CN4","CN5","X00","X01","X10","X02","X11","X20","X03","X12","X21","X30","X04","X13","X22","X31","X40","X05","X14","X23","X32","X41","X50"))
+  #tab.long <- melt(dataFrame, id.vars=c('cells', 'types', 'Wcount', 'Ccount','chr'), measure.vars=c("CN0","CN1","CN2","CN3","CN4","CN5","X00","X01","X10","X02","X11","X20","X03","X12","X21","X30","X04","X13","X22","X31","X40","X05","X14","X23","X32","X41","X50"))
+  tab.long <- melt(dataFrame, id.vars=c('chr','start','end','cells', 'types', 'Wcount', 'Ccount'), measure.vars=colnames(probs))
   
   #set theme for the main heatmap
   heatmap_theme <- theme(
@@ -48,6 +53,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
     panel.grid.minor=element_blank(),
     plot.background=element_blank(),
     axis.title.x=element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1),
     axis.title.y=element_blank(),
     plot.margin = unit(c(-0.5,-0.5,-0.5,-0.5),"mm"),
     legend.margin=margin(t=0, r=0, b=0, l=0, unit="cm"),
@@ -79,7 +85,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   #set the colors for the upper description row
   colColors <- brewer.pal(n=6, name="Set1")
   names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
-  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,3,4,5,6))))
+  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c("CN0","CN1","CN2","CN3","CN4","CN5", rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), c(1,2,6,10,19,28))))
   
   #plot the upper description row 
   header <- ggplot(colAnnot.df) + geom_tile(aes(x=ID, y=1, fill=type)) + scale_fill_manual(values = colColors) + header_theme + guides(fill = guide_legend(nrow = 1))
@@ -87,10 +93,13 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL) {
   
   #plot the right side description column
   celltypes <- as.character(dataFrame$types)
-  celltypes <- c(celltypes[which(celltypes=='all')], celltypes[-which(celltypes=='all')])
+  
+  if (aggProbs) {
+    celltypes <- c(celltypes[which(celltypes=='all')], celltypes[-which(celltypes=='all')])
+  }  
   colType.df <- data.frame(ID=celltypes, level=c(1:length(celltypes)))
   cellType <- ggplot(colType.df) + geom_tile(aes(x=1, y=factor(level), fill=ID)) + scale_fill_manual(values = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown", 'all'="red")) + header_theme
-  
+
   #extract legends from the plots
   plt.leg <- getlegend(plt)
   header.leg <- getlegend(header)
