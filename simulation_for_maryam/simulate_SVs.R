@@ -1,11 +1,4 @@
 library(data.table)
-#args = commandArgs(trailingOnly = T) # args = c(80, "het_del", 400e3, 1, "test.out.txt")
-
-SV_num    = 200
-SV_types  = c("het_del", "hom_del", "het_dup", "hom_dup", "het_inv", "hom_inv", "inv_dup", "false_del")
-SV_sizes  = c(50e3, 800e3)
-SV_vafs   = c(0.1,0.2,0.5,1)
-f_out     = "simulation.input.txt"
 
 # GRCh38
 chrom_sizes = data.table(
@@ -23,36 +16,46 @@ chrom_sizes = data.table(
         46709983, 50818468, 156040895, 57227415))
 
 
-SVs = NULL
-buffer = 1e6
-iterations = 0
-repeat {
-    # sample chromosome
-    chrom_ = sample(chrom_sizes$chrom, 1, prob = chrom_sizes$size / sum(chrom_sizes$size), replace = T)
-    
-    # sample SV size
-    SV_size = as.integer(runif(1, SV_sizes[1], SV_sizes[2]))
+get_SVs = function(chrom_sizes, SV_num, SV_size_limits, SV_types, buffer=1e6) {
+    iterations = 0    
+    SVs = NULL
+    repeat {
+        # sample chromosome
+        chrom_ = sample(chrom_sizes$chrom, 1, prob = chrom_sizes$size / sum(chrom_sizes$size), replace = T)
         
-    # sample position
-    new_s = as.integer(runif(1, 1, chrom_sizes[chrom == chrom_]$size - SV_size))
-    new_e = new_s + SV_size
-    
-    # sample SV_type
-    SV_type = sample(SV_types,1)
-    
-    # sample SV VAF
-    SV_vaf  = sample(SV_vafs, 1)
-    
-    # check overlap
-    if (is.null(SVs) || all(new_e <= SVs$start - buffer | new_s > SVs$end + buffer) ) {
-        SVs = rbind(SVs, data.table(chrom = chrom_, start = new_s, end = new_e, type = SV_type, vaf = SV_vaf))
+        # sample SV size
+        SV_size = as.integer(runif(1, SV_size_limits[1], SV_size_limits[2]))
+            
+        # sample position
+        new_s = as.integer(runif(1, 1, chrom_sizes[chrom == chrom_]$size - SV_size))
+        new_e = new_s + SV_size
+        
+        # sample SV_type
+        SV_type = sample(SV_types,1)
+        
+        # sample SV VAF
+        #SV_vaf  = sample(SV_vafs, 1)
+        
+        # check overlap
+        if (is.null(SVs) || all(new_e <= SVs$start - buffer | new_s > SVs$end + buffer) ) {
+            SVs = rbind(SVs, data.table(chrom = chrom_, start = new_s, end = new_e, type = SV_type))
+        }
+        iterations = iterations + 1
+        if (nrow(SVs) == SV_num || iterations > 50*SV_num) break
     }
-    iterations = iterations + 1
-    if (nrow(SVs) == SV_num || iterations > 15*SV_num) break
+    iterations
+    SVs <- SVs[order(chrom, start),]
+    SVs
 }
-iterations
-SVs <- SVs[order(chrom, start),]
-write.table(SVs, file = f_out, quote=F, row.names = F, col.names = F, sep = "\t")
+
+SV_types  = c("het_del", "hom_del", "het_dup", "hom_dup", "het_inv", "hom_inv", "inv_dup", "false_del")
+
+SVs_small = get_SVs(chrom_sizes, 150, c(50e3,200e3), SV_types, buffer=1e6)
+SVs_large = get_SVs(chrom_sizes, 150, c(200e3,800e3), SV_types, buffer=1e6)
+
+
+write.table(SVs_small, file = "data/sv_file.small.txt", quote=F, row.names = F, col.names = F, sep = "\t")
+write.table(SVs_large, file = "data/sv_file.large.txt", quote=F, row.names = F, col.names = F, sep = "\t")
 
 # Then run:
 # ../segmentation/scripts/simul -w 50000 -n 100 -o simulation.n200.txt.gz -c 4 -C 20 -s 3 -S simulation.sces.txt simulation.input.txt
