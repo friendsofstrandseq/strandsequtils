@@ -151,7 +151,7 @@ for (i in 1:nrow(segmentsCounts))
   print(i)
   hapStates = NULL
   segCounts = segmentsCounts[i,]
-  chr = chrNumber(segCounts[,1])
+  chr = chrNumber(segCounts[1,1])
   CN = getPossibleCNs(segCounts, p, as.numeric(r[chr,]))
   if (length(CN) > 0 && CN[1] < maximumCN)
   {
