@@ -1,0 +1,105 @@
+# SV type parameters
+SIZE   = [100000, 400000, 1000000] # [100000, 400000, 1000000]
+TYPE   = ["het_del", "hom_del", "het_inv", "hom_inv", "het_dup", "hom_dup"]
+VAF    = [1, 0.5, 0.1, 0.05]
+
+# cell simulation parameters
+SCES   = [0,8]
+CELLS  = [50]
+WINDOW = [50000]
+COV    = [5, 10, 20, 40] # [5, 10, 20, 40]
+
+rule all:
+    input:      expand("plots/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.qc_with_svs.pdf", \
+                       type = TYPE, size = SIZE, vaf = VAF, sce = SCES, cells = CELLS, window = WINDOW, cov = COV),
+                expand("segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.pdf", \
+                       type = TYPE, size = SIZE, vaf = VAF, sce = SCES, cells = CELLS, window = WINDOW, cov = COV, \
+                       seg = ["tA", "js","mc"]),
+                expand("roc/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.{ending}", \
+                       type = TYPE, size = SIZE, vaf = VAF, sce = SCES, cells = CELLS, window = WINDOW, cov = COV, \
+                       ending = ["segment_tA.pdf", "segment_js.pdf", "segment_mc.pdf"])
+
+rule sample_SVs:
+    output:     "svs/{type}_size{size}_vaf{vaf}.txt"
+    shell:      """
+                module load R
+                Rscript scripts/simulate_SVs.R 200 {wildcards.type} {wildcards.size} {wildcards.vaf} {output}
+                """
+
+rule simulate_cells:
+    input:      "svs/{type}_size{size}_vaf{vaf}.txt"
+    output:     "counts/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.txt.gz"
+    shell:      """
+                module load Boost HTSlib
+                scripts/simul -o {output} \
+                              -S {output}.sces.txt \
+                              -s {wildcards.sce} \
+                              -n {wildcards.cells} \
+                              -c {wildcards.cov} \
+                              -C {wildcards.cov} \
+                              -w {wildcards.window} \
+                              {input}
+                """
+
+rule plot_cell:
+    input:      d = "counts/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.txt.gz",
+                sv = "svs/{type}_size{size}_vaf{vaf}.txt"
+    output:     "plots/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.qc_with_svs.pdf"
+    shell:      """
+                module load R R-bundle-Bioconductor
+                Rscript scripts/qc2.R {input.d} {input.sv} {output}
+                """
+
+
+rule call_segments_tiling:
+    input:      "counts/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.txt.gz"
+    output:     "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_tA.txt"
+    shell:      """
+                module load R R-bundle-Bioconductor
+                Rscript scripts/segment_tA.R {input} {wildcards.window} {output}
+                """
+
+rule call_segments_jointseg:
+    input:      "counts/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.txt.gz"
+    output:     "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_js.txt"
+    shell:      """
+                module load R R-bundle-Bioconductor
+                Rscript scripts/segment_js.R {input} {wildcards.window} {output}
+                """
+
+rule call_segments_mosaicatcher:
+    input:      "counts/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.txt.gz"
+    output:     "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_mc.txt"
+    shell:      """
+                module load Boost HTSlib
+                tmp=$(mktemp)
+                echo $tmp
+                scripts/segmentation -o $tmp {input}
+                awk 'NR>1 && $1<100 {{ OFS="\t"; print $1, $3, $4 }}' $tmp > {output}
+                rm $tmp
+                """
+
+rule plot_segments:
+    input:      d = "counts/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.txt.gz",
+                sv = "svs/{type}_size{size}_vaf{vaf}.txt",
+                seg = "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.txt"
+    output:     "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.pdf"
+    shell:      """
+                module load R R-bundle-Bioconductor
+                Rscript scripts/plot_segmentation.R {input.d} {input.sv} {input.seg} 20 {wildcards.window} {output}
+                """
+
+
+rule calc_ROC:
+    input:      bp = "segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.txt",
+                sv = "svs/{type}_size{size}_vaf{vaf}.txt"
+    output:     pdf = "roc/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.pdf",
+                txt = "roc/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.pdf.txt"
+    shell:      """
+                module load R
+                module load R-bundle-Bioconductor
+                Rscript scripts/calc_roc.R {input.bp} {input.sv} {wildcards.window} {output.pdf}
+                """
+
+
+
