@@ -26,6 +26,7 @@ do
             ../../strseq/build/mosaic simulate -w 50000 -n 100 \
                 -c $cov -C $cov \
                 -o data/counts.cov${cov}.vaf${vaf}.${size}.txt.gz \
+                -S data/sces.cov${cov}.vaf${vaf}.${size}.txt \
                 -V data/variants.cov${cov}.vaf${vaf}.${size}.txt \
                 -U data/breakpoints.cov${cov}.vaf${vaf}.${size}.txt \
                 data/sv_config.vaf${vaf}.${size}.txt
