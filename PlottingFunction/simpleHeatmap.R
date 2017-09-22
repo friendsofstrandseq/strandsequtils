@@ -71,7 +71,11 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F,
   )
   
   #plot the main heatmap
-  plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_gradient(low = "white", high = "red", name="")
+  if (plot.log) {
+    plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_gradientn(colours =c("white","blue","red"), name="", trans='log')
+  } else {
+    plt <- ggplot(tab.long) + geom_tile(aes(x=variable, y=cells, fill=as.numeric(value))) + heatmap_theme + scale_fill_gradient(low = "white", high = "red", name="")
+  }
   
   #set the theme for description columns
   header_theme <- theme(
