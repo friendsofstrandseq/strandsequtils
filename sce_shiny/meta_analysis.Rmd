@@ -1,0 +1,106 @@
+# Manual SCE classification results
+
+> Compile with `Rscript -e 'rmarkdown::render("meta_analysis.Rmd")'`
+
+```{r, echo = F, warning = F, message = F}
+library(data.table)
+source("/srv/shiny-server/kinanen/SCE-Detection/global.R")
+```
+
+Read in results:
+
+```{r}
+sce <- rbind(cbind(author = "Ashley", fread("/srv/shiny-server/kinanen/SCE-Detection/Results/Ashley_results.txt")),
+             cbind(author = "Sascha", fread("/srv/shiny-server/kinanen/SCE-Detection/Results/Sascha_results.txt")),
+             cbind(author = "Karen",  fread("/srv/shiny-server/kinanen/SCE-Detection/Results/Karen_results.txt")),
+             cbind(author = "Venla",  fread("/srv/shiny-server/kinanen/SCE-Detection/Results/Venla_results.txt")))
+```
+
+This is a list of all SCEs found:
+
+```{r}
+all_sce <- sce[, .(num_authors = length(unique(author))), by = .(sample, cell, chrom, end)]
+```
+
+
+## General stats
+
+```{r progress_by_chrom, fig.width=6, fig.height=3}
+ggplot(sce) + aes(chrom, fill = author) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+This is how many people agreed on SCEs per chromosome:
+
+```{r num_of_sce_supporters_by_chrom, fig.width = 8, fig.height = 6}
+ggplot(all_sce) + aes(num_authors) + geom_histogram(binwidth = 1) + facet_wrap(~chrom)
+```
+
+At last we can derive a confusion table of how often authors agree:
+
+```{r}
+conftab = NULL
+for (author1 in unique(sce$author)) {
+  for (author2 in unique(sce$author)) {
+    x = sce[chrom %in% paste0("chr", 1:5) & author %in% c(author1, author2), length(author), 
+                 by = .(cell_name, chrom, end)]
+    if (author1 == author2) {
+      n = nrow(x)
+    } else {
+      n = nrow(x[V1>1,])
+    }
+    conftab = rbind(conftab,
+                    data.table(author1 = author1, 
+                               author2 = author2,
+                               n = n))
+  }
+}
+conftab <- merge(conftab, conftab[, .(N = max(n)), by = author1], by = "author1")
+conftab <- conftab[, r:= n/N][]
+ggplot(conftab) + aes(author1, author2, fill = r) + geom_raster() + scale_fill_gradientn(colours = c("red1","white","dodgerblue"))
+```
+
+# Inspecting problematic SCEs
+
+To make plots, let's read the raw Mosaicatcher data
+
+```{r}
+counts <- fread("/srv/shiny-server/kinanen/SCE-Detection/children.500kb.txt", showProgress = F)
+counts <- initialize_data(counts)
+```
+
+This is a function to plot a bunch of cells where authors don't agree on an SCE. 
+It shows the same chromosome of up to 8 cells which contain such an SCE and also 
+labels the potential SCE by the number of authors that clicked it.
+
+```{r}
+inspect_problematic_sces <- function(CHR) {
+  selection_cells  = unique(all_sce[chrom == CHR & num_authors < 4,.(sample, cell)])[1:8]
+  selection_sce     = sce[selection_cells, on = .(sample,cell)][chrom == CHR]
+  selection_counts  = counts[selection_cells, on = .(sample,cell)][chrom == CHR]
+  selection_all_sce = all_sce[selection_cells, on = .(sample,cell)][chrom == CHR]
+  main_plot(selection_counts) + 
+    geom_vline(data = selection_sce,  aes(xintercept = end)) +
+    geom_label(data = selection_all_sce, aes(label = num_authors, x = end, y = Inf, hjust = 1, vjust = 1))
+}
+```
+
+```{r problematic_sces_chr1, fig.width = 10, fig.height = 8}
+inspect_problematic_sces("chr1")
+```
+
+```{r problematic_sces_chr2, fig.width = 10, fig.height = 8}
+inspect_problematic_sces("chr2")
+```
+
+```{r problematic_sces_chr3, fig.width = 10, fig.height = 8}
+inspect_problematic_sces("chr3")
+```
+
+```{r problematic_sces_chr4, fig.width = 10, fig.height = 8}
+inspect_problematic_sces("chr4")
+```
+
+
+
+
+END.
