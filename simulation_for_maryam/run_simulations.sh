@@ -25,16 +25,20 @@ do
         do
             for p in 0.8 0.3 0.1 0.03
             do
-                echo -e "Size ${size},\tVAF ${vaf},\tcov ${cov}\tp $p"
-                ../../mosaicatcher_new/build/mosaic simulate -w 50000 -n 200 \
-                    -p $p \
-                    -c $cov -C $cov \
-                    -o data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz \
-                    -S data/sces.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
-                    -V data/variants.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
-                    -U data/breakpoints.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
-                    -P data/phases.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
-                    data/sv_config.vaf${vaf}.${size}.txt > /dev/null
+                if [ ! -f data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz ]
+                then
+                    echo -e "Size ${size},\tVAF ${vaf},\tcov ${cov}\tp $p"
+                    ../../mosaicatcher_new/build/mosaic simulate -w 50000 -n 200 \
+                        -p $p \
+                        -c $cov -C $cov \
+                        -o data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz \
+                        -S data/sces.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                        -V data/variants.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                        -U data/breakpoints.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                        -P data/phases.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                        data/sv_config.vaf${vaf}.${size}.txt
+					Rscript qc/R data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz data/plot.cov${cov}.vaf${vaf}.${size}.p${p}.pdf
+                fi
             done
         done
     done
