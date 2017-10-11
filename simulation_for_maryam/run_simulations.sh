@@ -1,4 +1,5 @@
 #!/bin/bash
+module load Boost HTSlib
 
 echo "Simuating data for Maryam"
 
@@ -7,7 +8,7 @@ echo "Distributing SVs..."
 Rscript simulate_SVs.R 
 
 echo "Expanding different VAFs..."
-for vaf in 1 0.5 0.25 0.1
+for vaf in 1 0.5 0.25 0.1 0.08 0.05 0.02
 do
     for size in small large 
     do
@@ -16,25 +17,26 @@ do
 done
 
 echo "Simulating cells with MC"
-for vaf in 1 0.5 0.25 0.1
+for vaf in 1 0.5 0.25 0.1 0.08 0.05 0.02
 do
     for size in small large
     do
         for cov in 5 15 45
         do
-            echo -e "Size ${size},\tVAF ${vaf},\tcov ${cov}"
-            ../../strseq/build/mosaic simulate -w 50000 -n 100 \
-                -c $cov -C $cov \
-                -o data/counts.cov${cov}.vaf${vaf}.${size}.txt.gz \
-                -S data/sces.cov${cov}.vaf${vaf}.${size}.txt \
-                -V data/variants.cov${cov}.vaf${vaf}.${size}.txt \
-                -U data/breakpoints.cov${cov}.vaf${vaf}.${size}.txt \
-                data/sv_config.vaf${vaf}.${size}.txt
+            for p in 0.8 0.3 0.1 0.03
+            do
+                echo -e "Size ${size},\tVAF ${vaf},\tcov ${cov}\tp $p"
+                ../../mosaicatcher_new/build/mosaic simulate -w 50000 -n 200 \
+                    -p $p \
+                    -c $cov -C $cov \
+                    -o data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz \
+                    -S data/sces.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                    -V data/variants.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                    -U data/breakpoints.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                    -P data/phases.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
+                    data/sv_config.vaf${vaf}.${size}.txt > /dev/null
             done
+        done
     done
 done
 
-
-echo "Plotting"
-#Rscript ../../strseq/R/qc.R data/sv_config.vaf${vaf}.${size}.txt data/qcplot.vaf${vaf}.${size}.pdf
-#Rscript ../../strseq/R/plot_segments.R data/counts.cov${cov}.vaf${vaf}.${size}.txt.gz data/variants.cov${cov}.vaf${vaf}.${size}.txt data/segmentplot.cov${cov}.vaf${vaf}.${size}.pdf
