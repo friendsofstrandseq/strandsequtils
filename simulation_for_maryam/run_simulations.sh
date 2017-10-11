@@ -4,15 +4,22 @@ module load Boost HTSlib
 echo "Simuating data for Maryam"
 
 mkdir data 2>/dev/null
-echo "Distributing SVs..."
-Rscript simulate_SVs.R 
 
-echo "Expanding different VAFs..."
+if [ ! -f data/sv_file.small.txt ]
+then
+    echo "Distributing SVs..."
+    Rscript simulate_SVs.R 
+fi
+
 for vaf in 1 0.5 0.25 0.1 0.08 0.05 0.02
 do
     for size in small large 
     do
-        awk -v vaf="$vaf" '{print $0 "\t" vaf}' data/sv_file.${size}.txt > data/sv_config.vaf${vaf}.${size}.txt
+        if [ ! -f data/sv_config.vaf${vaf}.${size}.txt ]
+        then
+            echo "Expanding different VAFs..."
+            awk -v vaf="$vaf" '{print $0 "\t" vaf}' data/sv_file.${size}.txt > data/sv_config.vaf${vaf}.${size}.txt
+        fi
     done
 done
 
@@ -37,7 +44,7 @@ do
                         -U data/breakpoints.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
                         -P data/phases.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
                         data/sv_config.vaf${vaf}.${size}.txt
-					Rscript qc/R data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz data/plot.cov${cov}.vaf${vaf}.${size}.p${p}.pdf
+					Rscript qc.R data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz data/plot.cov${cov}.vaf${vaf}.${size}.p${p}.pdf
                 fi
             done
         done
