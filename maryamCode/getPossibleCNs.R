@@ -16,7 +16,7 @@ getPossibleCNs = function(segCounts, p, chrCellsDispPars, binLength, alpha)
   totalCount = sum(as.integer(segCounts[,4:ncol(segCounts)]))
   segLen = as.integer(segCounts[,3]) - as.integer(segCounts[,2]) + 1
   
-  CNp = getCNprob(totalCount, p, totalR, segLen)
+  CNp = getCNprob(totalCount, p, totalR, segLen, binLength)
   
   if (sum(CNp) > 0) # CN <= maxCN = 5
   {

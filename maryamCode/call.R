@@ -42,7 +42,6 @@ source('./getCellStatProbTable.R')
 source('./normalizeProbabilities.R')
 source('./getOneCNprobTable.R')
 source('./Plot_ReadDistributions_Simple.R')
-source('./regularizeProbabilities.R')
 
 args = commandArgs(trailingOnly=TRUE)
 temp = args[1]
@@ -113,7 +112,7 @@ rownames(disp) = paste0(rep("chr",K), 1:K)
 colnames(disp) = paste0(rep("cell", numCells), 1:numCells)
 
 start.time = Sys.time()
-NBfitplots(paste0(temp, "NBfitPlots/"), unique.counts, cellTypes, p, disp)
+NBfitplots(paste0(temp, "NBfitPlots/"), unique.counts, cellTypes, p, disp, bin.size)
 print(Sys.time()-start.time)
 
 # output the NB parameters
@@ -152,7 +151,7 @@ for (i in 1:nrow(segmentsCounts))
   hapStates = NULL
   segCounts = segmentsCounts[i,]
   chr = chrNumber(segCounts[1,1])
-  CN = getPossibleCNs(segCounts, p, as.numeric(r[chr,]))
+  CN = getPossibleCNs(segCounts, p, as.numeric(r[chr,]), bin.size)
   if (length(CN) > 0 && CN[1] < maximumCN)
   {
     # for (j in 1:length(CN))
@@ -167,7 +166,7 @@ for (i in 1:nrow(segmentsCounts))
     {
       hapStates[j] = paste(decodeStatus(hapStates[j]), collapse = '')
     }
-    hapProbTables[[i]] = getCellStatProbabilities(hapStates, segCounts, as.character(cellTypes[chr,]), p, as.numeric(r[chr,]), binLength = 100000, alpha = 0.05)
+    hapProbTables[[i]] = getCellStatProbabilities(hapStates, segCounts, as.character(cellTypes[chr,]), p, as.numeric(r[chr,]), binLength = bin.size, alpha = 0.05)
     genotypeProbTables[[i]] = getGenotypeProbTable(hapProbTables[[i]])
   }
 }
@@ -182,17 +181,7 @@ for (i in 1:nrow(cellTypes))
   chrOrder[[i]] = c(which(cellTypes[i,] == "wc"), which(cellTypes[i,] == "ww"), which(cellTypes[i,] == "cc"))
 }
 
-# regularization
-nonReghapProbTables = hapProbTables
-nonRegGenotypeProbTables = genotypeProbTables
-for (i in 1:nrow(segmentsCounts))
-{
-  if (! is.null(hapProbTables[[i]]))
-  {
-    hapProbTables[[i]] = regularizeProbTable(hapProbTables[[i]])
-    genotypeProbTables[[i]] = regularizeProbTable(genotypeProbTables[[i]])
-  }
-}
+
 
 for (i in filterSeg)
 {
@@ -267,41 +256,21 @@ for (i in filterSeg)
   }
 }
 
-subDir = "SVcallingDataRegularizedProb/"
-write.table(probTables, file = paste0(temp, subDir,"allSegCellProbs.table"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(probTables, file = paste0(temp,"allSegCellProbs.table"), sep = "\t", quote = FALSE, row.names = FALSE)
 aggProbTable = probTables[probTables$cells == 116,]
 SVs = SVcalling(aggProbTable)
 SVs = cbind(SVs[,1:3], width = as.numeric(SVs[,3])-as.numeric(SVs[,2]), SVs[,4:ncol(SVs)])
-write.table(aggProbTable, file = paste0(temp, subDir, "allSegAggregateProbs.table"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(aggProbTable, file = paste0(temp,"allSegAggregateProbs.table"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 AshleySeg = read.table("/local/data/maryam/data/strand-seq/segmentsWithStatus.bed", stringsAsFactors = FALSE)
 AshleySeg = AshleySeg[match(SVs[,2], AshleySeg[,2]),]
 avgCount = apply(as.matrix(r), 2, as.numeric)*(1-p)/(p*2)
 avgTotCount = rowSums(avgCount)
-SVs = cbind(SVs[,1:8], data.frame(observedToAverageReadCountFraction =
-                                    ((as.numeric(SVs$Wcount)+as.numeric(SVs$Ccount))*bin.size)/(avgTotCount[sapply(SVs$chr,chrNumber)]*SVs$width))
-            , SVs[,9:ncol(SVs)], AshleyCall = AshleySeg[,4])
-
-write.table(SVs, file = paste0(temp, subDir, "allSegSV.table"), sep = "\t", quote = FALSE, row.names = FALSE)
-
-# dirty part
-# clustering cells and ordering them based on clusters
-#filtSeg = which(as.numeric(segmentsCounts$end) - as.numeric(segmentsCounts$start) > 10000)
-gg = cellsStatusProbTable(genotypeProbTables, 1:ncol(cellTypes))# filtSeg)
-cellDist = dist(gg, method = "euclidean")
-cellsClust = hclust(cellDist, method = "ward.D")
-plot(cellsClust)
-ord = order.dendrogram(as.dendrogram(cellsClust))
-
-# reading the prob table
-gp = read.table(paste0(temp, subDir, "allSegCellProbs.table"), sep = "\t", stringsAsFactors = FALSE)
-names = gp[1,]
-gp = gp[2:nrow(gp),]
-names[13+c(1,2,4,7,11,16)] = c("00","01","02","03","04","05")
-colnames(gp) = names
-aggP = read.table(paste0(temp, subDir, "allSegAggregateProbs.table"), stringsAsFactors = FALSE)
-colnames(aggP) = names
-aggP = aggP[2:nrow(aggP),]
+SVs = cbind(SVs[,1:8], data.frame(observedToAverageReadCountFraction = 
+              ((as.numeric(SVs$Wcount)+as.numeric(SVs$Ccount))*bin.size)/(avgTotCount[sapply(SVs$chr,chrNumber)]*SVs$width))
+              , SVs[,9:ncol(SVs)], AshleyCall = AshleySeg[,4])
+              
+write.table(SVs, file = paste0(temp, "allSegSV.table"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # dirty part
 # clustering cells and ordering them based on clusters

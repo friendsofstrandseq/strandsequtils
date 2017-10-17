@@ -11,7 +11,7 @@
 #' 
 
 
-getCNprob = function(readCount, p, r, segLen, binLen = 100000, maxCN = 5, alpha = 0.05)
+getCNprob = function(readCount, p, r, segLen, binLen, maxCN = 5, alpha = 0.05)
 {
   CNprob = NULL
   disp = (r/2)*(segLen/binLen) # disp = dispersion par for copy number 1 for this segLen

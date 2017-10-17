@@ -7,23 +7,23 @@
 #' @export
 #' 
 
-source('./dispersionParGivenType.R')
+#source('./dispersionParGivenType.R')
 
 
-NBfitplots <- function(directory, counts, cellTypes, p, dispersion)
+NBfitplots <- function(directory, counts, cellTypes, p, dispersion, bin.size)
 {
-  setwd(directory)
+  #setwd(directory)
   numCells = (ncol(counts[[1]])-3)/2
   for (i in 1:length(counts))
   {
-    pdf(paste0("chr", i, "NBfit.pdf"))
+    pdf(paste0(directory,"chr", i, "NBfit.pdf"))
     par(mfrow=c(2,3))
     for (j in 1:numCells)
     {
       Wcount = counts[[i]][,2*j+2]
       Ccount = counts[[i]][,2*j+3]
       
-      r = dispersionPar(cellTypes[i,j], dispersion[i,j])
+      r = dispersionPar(cellTypes[i,j], dispersion[i,j], binLength = bin.size)
       r = c(r, dispersion[i,j]) # adding the dispersion par for the total number of read counts
       
       allCounts = list(Wcount, Ccount, Wcount + Ccount)
