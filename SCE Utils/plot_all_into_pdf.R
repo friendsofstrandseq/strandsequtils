@@ -86,6 +86,10 @@ plot_all_into_pdf <- function(d, pdf_out, bkp_file = NULL, verbose = F, HMM = T)
       info_sample_name = paste(s, ce, sep = "_")
       info_cell_name   = ce
 
+      if (!is.null(bkp_file)) {
+        g = g[!(paste(chrom, end, sep = "_") %in% paste(info_chrom_sizes$chrom, info_chrom_sizes$xend, sep="_"))]
+      }
+
       # main plot:
       plt <- ggplot2::ggplot(e) +
         ggplot2::aes(x = (start + end) / 2)
@@ -202,7 +206,6 @@ plot_all_into_pdf <- function(d, pdf_out, bkp_file = NULL, verbose = F, HMM = T)
       if(!is.null(bkp_file) && nrow(g) > 0) {
 
         plt <- plt +
-          geom_vline(data = g,  aes(xintercept = start), color="orangered", size=1, alpha=0.6) +
           geom_vline(data = g,  aes(xintercept = end), color="orangered", size=1, alpha=0.6)
       }
 
