@@ -221,4 +221,5 @@ if(grepl('\\.gz$', f_in))
 d = fread(f_in)
 
 sces = detect_SCEs(d)
+sces = sces[, .(chrom, start, end, sample, cell, class)]
 write.table(sces, file = f_out, col.names = T, row.names = F, quote=F, sep="\t")
