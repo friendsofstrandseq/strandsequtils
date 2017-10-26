@@ -1,4 +1,4 @@
-setwd("/local/data/maryam/codes/strand-seq/SVcalling/gitHubCode/maryamCode")
+setwd("/local/home/mgharegh/research/codes/serverCode-Oct17/maryamCode")
 source('./WCcount.R')
 source('./readBams.R')
 source('./splitChr.R')

@@ -1,6 +1,7 @@
 # tested
-#' computes the genotype status corresponding to the input haplotype status
-#' @param haplotyeStatus a decoded haplotype status
+#' computes the total normal CN and inverted CN status corresponding to the input decoded (non-binary) haplotype status
+#'  Note that it doesn't compute the genotype (distribution of the CNs in the haplotypes)
+#' @param haplotyeStatus a decoded (non binary) haplotype status
 #' @author Maryam Ghareghani
 #' @export
 #' 

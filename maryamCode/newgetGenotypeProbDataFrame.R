@@ -1,6 +1,7 @@
 #' takes as input a haplotype probTable dataFrame and outout the genotype probTable
 #' @param hapProbDF a dataFrame containing haplotype prob table
 #' @author Maryam Ghareghani
+#' @export
 
 getGenotypeProbDataFrame = function(hapProbDF)
 {

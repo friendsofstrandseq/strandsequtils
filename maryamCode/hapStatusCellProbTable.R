@@ -1,3 +1,4 @@
+#' returns a matrix of haplotype (rows) pobabilities in different single cells (columns)
 #' @param hapStatus a vector of decoded halotype status (strings)
 #' @param counts a one row dataframe containing the read counts of the segment
 #' @param chrCellTypes cell types in the chromosome where the segment lies

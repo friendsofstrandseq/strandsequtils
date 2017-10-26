@@ -1,4 +1,4 @@
-#' exclude segments with no coverage
+#' balcklist segments with more than alpha fraction of low mapq reads
 #' @param counts dataframe containing W and C read counts in segments
 #' @param uniqe.counts dataframe containing W and C unique read counts in segments
 #' @author Maryam Ghareghani

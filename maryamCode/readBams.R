@@ -1,4 +1,4 @@
-#' Read bam files from a directory and output them as a \code{\link{GRanges}} object. It also writes the name of the bam files in a file
+#' Read bam files from a directory and output them (the first mates only) as a list of \code{\link{GRanges}} objects. It also writes the name of the bam files in a file
 #' @param directory directory containing the bam files
 #' @param bamFilenames name of a file to write the names of the bam files in
 #' @param unq Only the unique alignments are given as output, if unq = TRUE
@@ -9,6 +9,7 @@
 read.bams <- function(directory, bamFilenames = "", unq = TRUE)
 {
   setwd(directory)
+  
   files = list.files(pattern = "\\.bam$")
   if (bamFilenames != "")
   {

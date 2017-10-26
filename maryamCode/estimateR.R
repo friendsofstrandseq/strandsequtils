@@ -1,5 +1,5 @@
 #' estimates r parameters
-#' @param counts dataframe containing W and C read counts in some segments
+#' @param counts dataframe containing W and C read counts in bins
 #' @param p estimated p parameter
 #' @author Maryam Ghareghani
 #' @export
@@ -22,5 +22,3 @@ estimateR <- function(counts, p)
   
   dispersion
 }
-
-# need to be changed... We shouldn't count first pairs only

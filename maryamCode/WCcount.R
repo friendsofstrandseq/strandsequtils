@@ -1,4 +1,4 @@
-#' Count the number of Watson and Crick reads
+#' Count the number of Watson and Crick reads and return a dataframe of read counts
 #' @param cells.alignmemts A list of \code{\link{GRanges}} objects with Strand-specific read data
 #' @param segments A list \code{\link{GRanges}} objects (genomic intervals)
 #' @author Maryam Ghareghani

@@ -1,5 +1,5 @@
 # tested
-#' compute a genotype probability table given the haplotype probability table
+#' compute a noramlInvCN probability table given the haplotype probability table
 #' @param haplotypeProbTable a haplotype probability table with the set of decoded (non-binary) haplotypes for rows and cells for columns
 #' @author Maryam Ghareghani
 #' @export

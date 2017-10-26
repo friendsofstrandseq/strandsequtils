@@ -15,4 +15,4 @@ split.chromosomes <- function(counts)
   list.counts
 }
 
-# need to be changed... We shouldn't count first pairs only
+# considers only autosomes

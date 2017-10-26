@@ -1,4 +1,4 @@
-#' exclude segments with no coverage
+#' balcklist segments with no coverage
 #' @param counts dataframe containing W and C read counts in some segments
 #' @author Maryam Ghareghani
 #' @export
