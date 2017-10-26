@@ -7,8 +7,6 @@
 #' @export
 #' 
 
-#source('./dispersionParGivenType.R')
-
 
 NBfitplots <- function(directory, counts, cellTypes, p, dispersion, bin.size)
 {

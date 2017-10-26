@@ -2,6 +2,9 @@
 #' regularize the probability table according to the mentioned assumption
 #' @param probTable A non regularized prob table in which every row corresponds to a status and each column corresponds to a single cell
 #' @param regFactor the regularization factor
+#' @author Maryam Ghareghani
+#' @export
+#' 
 
 regularizeProbTable = function(probTable, regFactor = 1e-10)
 {

@@ -1,5 +1,5 @@
 #' estimates p parameter 
-#' @param counts dataframe containing W and C read counts in some segments
+#' @param counts dataframe containing W and C read counts in bins
 #' @author Maryam Ghareghani
 #' @export
 #' 
@@ -34,4 +34,3 @@ estimateP <- function(counts, directory = "")
   p
 }
 
-# need to be changed... We shouldn't count first pairs only

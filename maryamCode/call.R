@@ -60,7 +60,8 @@ start.time = Sys.time()
 cell.alignments = read.bams(bamDir, paste0(temp,"bamFilenames.data"), FALSE)
 print(Sys.time() - start.time)
 numCells = length(cell.alignments)
-#cell.unique.alignments = read.bams("/local/home/mgharegh/research/data/strand-seq/bams/")
+
+# store uniqe alignments (mapq>10) in other Granges list
 cell.unique.alignments = list()
 for (i in 1:length(cell.alignments))
 {
@@ -108,7 +109,7 @@ unique.counts = filt(unique.counts, mappable.bins.index)
 # estimate NB parameters
 p = estimateP(unique.counts, temp)
 disp = estimateR(unique.counts, p)
-rownames(disp) = paste0(rep("chr",K), 1:K)
+rownames(disp) = paste0(rep("chr",K), 1:K) # only autosomes
 colnames(disp) = paste0(rep("cell", numCells), 1:numCells)
 
 start.time = Sys.time()
@@ -129,16 +130,20 @@ write.table(seg.unique.counts, file = paste0(temp,"segUniqeReadCounts.data"), qu
 
 # seg.unique.counts = split.chromosomes(seg.unique.counts)
 
-# reading files... (alternative to the previous lines)
+# reading files... (alternative to the previous lines incase the NB params and the bin and segment read counts are ready)
 p = read.table(paste0(temp, "p.data"))[1,1]
-r = read.table(paste0(temp, "r.data"), stringsAsFactors = FALSE)
-colnames(r) = r[1,]
-r = r[2:nrow(r),]
-segmentsCounts = read.table(paste0(temp, "segUniqeReadCounts.data"), stringsAsFactors = FALSE)
-colnames(segmentsCounts) = segmentsCounts[1,]
-segmentsCounts = segmentsCounts[2:nrow(segmentsCounts),]
+r = read.table(paste0(temp, "r.data"), stringsAsFactors = FALSE, header = TRUE)
+#delete later
+#colnames(r) = r[1,]
+#r = r[2:nrow(r),]
+segmentsCounts = read.table(paste0(temp, "segUniqeReadCounts.data"), stringsAsFactors = FALSE, header = TRUE)
+#delete later
+#colnames(segmentsCounts) = segmentsCounts[1,]
+#segmentsCounts = segmentsCounts[2:nrow(segmentsCounts),]
 cellTypes = read.table(paste0(temp, "cellTypes.data"), stringsAsFactors = FALSE)
 colnames(cellTypes) = colnames(r)
+
+# SV calling
 
 CNhaplotypes = getHapStatesForCN()
 

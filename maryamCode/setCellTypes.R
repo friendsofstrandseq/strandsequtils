@@ -1,4 +1,4 @@
-#' set the cell/chromosome types
+#' return the cell/chromosome types
 #' @param alignmemts A list of \code{\link{GRanges}} objects with Strand-specific read data
 #' @param K number of chromosomes
 #' @author Maryam Ghareghani
@@ -18,8 +18,8 @@ getTypes <- function(alignments, K = 22)
      
       if (Nc == 0)
       {
-	types[j,i] = "ww"
-	break()
+      	types[j,i] = "ww"
+      	break()
       }
       WCfrac = Nw/Nc
       
