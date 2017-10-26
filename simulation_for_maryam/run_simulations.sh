@@ -38,6 +38,7 @@ do
                     ../../mosaicatcher_new/build/mosaic simulate -w 50000 -n 200 \
                         -p $p \
                         -c $cov -C $cov \
+                        -i data/info.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
                         -o data/counts.cov${cov}.vaf${vaf}.${size}.p${p}.txt.gz \
                         -S data/sces.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
                         -V data/variants.cov${cov}.vaf${vaf}.${size}.p${p}.txt \
