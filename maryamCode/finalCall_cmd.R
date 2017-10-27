@@ -112,12 +112,12 @@ SVcalling.wrapper.func(bin.size, K, maximumCN, segmentsCounts, r, p, cellTypes, 
 # breakpointsFile="/local/home/mgharegh/research/HDhackathon/simulatedData/breakpoints.cov5.vaf0.5.small.p0.3.txt"
 # Rdirectory="/local/home/mgharegh/research/codes/serverCode-Oct17/maryamCode"
 
-Rdirectory = "/local/home/mgharegh/research/codes/serverCode-Oct17/maryamCode/"
-binRCfile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.50kb_fixed.txt.gz"
-BRfile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.50000_fixed.BR.txt"
-infoFile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.50kb_fixed.info"
-stateFile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.states.txt"
+Rdirectory = "/local/home/mgharegh/research/codes/SSgitHub/strandsequtils/maryamCode/"
+binRCfile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.100000_fixed.txt.gz"
+BRfile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.100000_fixed.many.txt"
+infoFile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.100000_fixed.info"
+stateFile = "/local/home/mgharegh/research/HDhackathon/data/skin/D2Rfb.final.txt"
 outputDir = "/local/home/mgharegh/research/HDhackathon/data/skin/"
 K = 22
 maximumCN = 5
-bin.size = 50000
+bin.size = 100000

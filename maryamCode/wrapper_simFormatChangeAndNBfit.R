@@ -76,7 +76,7 @@ changeNBparamsFormat = function(infoFile, K)
 {
   info = fread(infoFile)
   p = info$nb_p[1]
-  r = info$nb_n
+  r = info$nb_r
   numcells = length(r)
   # remove the next line later
   r = r*2
