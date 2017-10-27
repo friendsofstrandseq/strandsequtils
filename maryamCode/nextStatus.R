@@ -7,7 +7,6 @@
 
 getNextState = function(currentState)#, n, m)
 {
-  source('./initializeState.R')
   nextState = currentState
   pos = str_locate_all(currentState, "01")[[1]][,1]
   if (length(pos) == 0)
