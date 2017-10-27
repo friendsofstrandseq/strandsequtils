@@ -9,14 +9,14 @@
 #' @author Maryam Ghareghani
 
 
-args = commandArgs(trailingOnly=TRUE)
-tempDir = args[1]
-bamDir = args[2]
-directory = args[3]
+#args = commandArgs(trailingOnly=TRUE)
+#tempDir = args[1]
+#bamDir = args[2]
+#directory = args[3]
 
 # set parameters
-bin.size = 100000
-K = 22 # number of chromosomes
+#bin.size = 100000
+#K = 22 # number of chromosomes
 
 countAndNBfit.wrapper.func = function(segmentsFile, tempDir, bamDir, directory, bin.size, K = 22)
 {
