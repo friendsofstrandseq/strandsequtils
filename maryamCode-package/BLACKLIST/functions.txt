@@ -1,2 +1,0 @@
-readBams.R --> read.bams	Read bam files from a directory and output them (the first mates only) as a list of GRanges objects. It also writes the name of the bam files in a file 
-WCcount.R -->  WCreadCounts	Count the number of Watson and Crick reads and return a dataframe of read counts
