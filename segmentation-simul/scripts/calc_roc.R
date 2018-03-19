@@ -65,7 +65,7 @@ for (bp_per_Mb_ in unique(bp$bp_per_Mb)) {
 
     # Calculate for each real breakpoint whether it was found
     SVs[, found := nrow(bpx[bpx.chrom == chrom & abs(sv_pos - bpx.bp_pos) <= MAX_DIST_FACTOR*windowsize]), by = .(chrom,sv_pos)]
-    assert_that(max(SVs$found)<=1)
+    #assert_that(max(SVs$found)<=1) % this is not always the case: it could be found by 2 breakpoints
     #message("[calc_roc.R] ", nrow(SVs[found>0]), " of ", nrow(SVs), " SV breakpoints were found")
 
 
