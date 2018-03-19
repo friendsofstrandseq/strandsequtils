@@ -22,12 +22,12 @@ setPanelHeights <- function(g, heights){
 }
 
 #Main heatmap function
-plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F, CNV=3) {
+plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F, maximumCN=4, CNV=3) {
   #get rid of leading X character after reading data in
   colnames(dataFrame) <- gsub(colnames(dataFrame), pattern = 'X', replacement = '')
   
   #Filter probs for certain CNVs
-  probs.names <- colnames(dataFrame[14:ncol(dataFrame)])
+  probs.names <- colnames(dataFrame[(maximumCN+9):ncol(dataFrame)])
   probs.names.l <- sapply(probs.names, function(x) strsplit(x, ''))
   probs.names.cnv <- sapply(probs.names.l, function(x) sum(as.numeric(x)))
   probs2filt <- names(probs.names.cnv[probs.names.cnv > CNV])
@@ -50,7 +50,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F,
   } else {
     dataFrame$cells <- factor(dataFrame$cells, levels=rowIds)
   }
-
+  
   #tranform wide table format into a long format for plotting
   #tab.long <- melt(dataFrame, id.vars=c('cells', 'types', 'Wcount', 'Ccount','chr'), measure.vars=c("CN0","CN1","CN2","CN3","CN4","CN5","X00","X01","X10","X02","X11","X20","X03","X12","X21","X30","X04","X13","X22","X31","X40","X05","X14","X23","X32","X41","X50"))
   tab.long <- melt(dataFrame, id.vars=c('chr','start','end','cells', 'types', 'Wcount', 'Ccount'), measure.vars=colnames(probs))
@@ -97,13 +97,13 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F,
   )
   
   #set the colors for the upper description row
-  colColors <- brewer.pal(n=6, name="Set1")
-  names(colColors) <- c("CN0","CN1","CN2","CN3","CN4","CN5")
-  CNV.states <- rep(c("CN0","CN1","CN2","CN3","CN4","CN5"), table(probs.names.cnv))
+  colColors <- brewer.pal(n=maximumCN+1, name="Set1")
+  names(colColors) <- paste0("CN",0:maximumCN) #c("CN0","CN1","CN2","CN3","CN4","CN5")
+  CNV.states <- rep(names(colColors), table(probs.names.cnv))
   CNV.states <- CNV.states[gsub(CNV.states, pattern = 'CN', replacement = '') <= CNV]
-  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c("CN0","CN1","CN2","CN3","CN4","CN5", CNV.states))
+  colAnnot.df <- data.frame(ID=factor(levels(tab.long$variable), levels=levels(tab.long$variable)), type = c(names(colColors), CNV.states))
   
-  #plot the upper description row 
+  #plot the upper description row
   header <- ggplot(colAnnot.df) + geom_tile(aes(x=ID, y=1, fill=type)) + scale_fill_manual(values = colColors) + header_theme + guides(fill = guide_legend(nrow = 1))
   header.dummy <- ggplot(data.frame(size=1)) + geom_tile(aes(x=size, y=1), fill='white') + header_theme + theme(legend.position="none")
   
@@ -114,15 +114,15 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F,
     celltypes <- c(celltypes[which(celltypes=='all')], celltypes[-which(celltypes=='all')])
   }  
   colType.df <- data.frame(ID=celltypes, level=c(1:length(celltypes)))
-  cellType <- ggplot(colType.df) + geom_tile(aes(x=1, y=factor(level), fill=ID)) + scale_fill_manual(values = c('cc'="paleturquoise4", 'wc'="olivedrab",'ww'="sandybrown", 'all'="red")) + header_theme
-
+  cellType <- ggplot(colType.df) + geom_tile(aes(x=1, y=factor(level), fill=ID)) + scale_fill_manual(values = c('cc'="paleturquoise4",  'cw'="blue", 'wc'="olivedrab",'ww'="sandybrown", 'all'="red")) + header_theme
+  
   #extract legends from the plots
   plt.leg <- getlegend(plt)
   header.leg <- getlegend(header)
   cellType.leg <- getlegend(cellType)
   
   #organize plots into a single row
-  legends <- cbind(plt.leg, header.leg, cellType.leg)
+  legends <- gtable_cbind(plt.leg, header.leg, cellType.leg)
   
   #remove legends from the plots
   plt <-  plt + theme(legend.position='none')
@@ -144,7 +144,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F,
   g.col2 <- setPanelHeights(g.col2, unit.c(unit(1,"line"), unit(nrow(g4),"line")))
   
   #bind plot columns into a plot matrix
-  g.matrix <- cbind(g.col1, g.col2)
+  g.matrix <- gtable_cbind(g.col1, g.col2)
   
   #set relative widths of the final plot matrix
   g.matrix$widths[c(4,11)] <- unit.c(unit(ncol(g3),"null"), unit(1, "line")) 
@@ -154,6 +154,7 @@ plotHeatmapSegment <- function(dataFrame, plot.log=FALSE, file=NULL, aggProbs=F,
   #set the position of the legend
   final.plot$heights <- unit.c(unit(14,"line"), unit(1, "line")) 
   
-  grid.newpage()
-  grid.draw(final.plot)
-}  
+  #grid.newpage()
+  #grid.draw(final.plot)
+  return(list(heatmap.plt=final.plot, hc.ord=rev(dataFrame$cells)))
+}
