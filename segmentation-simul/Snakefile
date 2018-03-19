@@ -1,7 +1,7 @@
 # SV type parameters
 SIZE   = [100000, 400000, 1000000, 2000000]
 TYPE   = ["het_del", "het_inv", "het_dup", "hom_del", "hom_inv", "hom_dup", "inv_dup"]
-VAF    = [1, 0.5, 0.2, 0.1, 0.05]
+VAF    = [1, 0.5, 0.2, 0.1, 0.05, 0.02]
 
 # cell simulation parameters
 SCES   = [4]
@@ -26,7 +26,7 @@ rule all:
                         sce = SCES,
                         size = SIZE,
                         vaf = VAF,
-                        type = ["het_del"],
+                        type = TYPE,
                         method = METHOD)
 
 
@@ -48,6 +48,7 @@ rule simulate_cells:
                 /g/korbel/meiers/tools/mosaicatcher/mosaicatcher/build/mosaicatcher \
                 simulate      -o {output} \
                               -S {output}.sces.txt \
+                              -p 0.3 \
                               -s {wildcards.sce} \
                               -n {wildcards.cells} \
                               -c {wildcards.cov} \
@@ -104,7 +105,7 @@ rule calc_ROC:
 
 
 ################################################################################
-# Plot functions                                                               #
+# DEPRECATED - Plot functions                                                  #
 ################################################################################
 
 
