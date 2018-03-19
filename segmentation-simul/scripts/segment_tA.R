@@ -4,7 +4,7 @@ library(tidyverse)
 library(assertthat)
 
 
-segmentation <- function(d, windowsize = 200e3, bp_per_Mb = 0.2) 
+segmentation <- function(d, windowsize = 200e3, bp_per_Mb = 0.5)
 {
     assert_that(is.data.table(d))
     assert_that(all(c("chrom","start","end","sample","cell","c","w") %in% colnames(d)))
@@ -42,7 +42,7 @@ windowsize = as.integer(args[2])
 f_out = args[3]
 
 d = fread(paste("zcat", f_in))
-BKP = segmentation(d)
+BKP = segmentation(d, windowsize)
 #plot_segmentation(d, BKP, file = "out.pdf", width = 16, height = 9)
 
 

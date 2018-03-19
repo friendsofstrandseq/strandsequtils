@@ -68,7 +68,7 @@ for (bp_per_Mb_ in unique(bp$bp_per_Mb)) {
     assert_that(max(SVs$found)<=1)
     #message("[calc_roc.R] ", nrow(SVs[found>0]), " of ", nrow(SVs), " SV breakpoints were found")
 
-    
+
     X = data.table(bp_per_Mb = bp_per_Mb_,
                    SV_found  = nrow(SVs[found>0]),
                    SV_total  = nrow(SVs),
