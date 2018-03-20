@@ -20,4 +20,4 @@ p <- ggplot(D) +
                         name = "Breakpoints per Mb") +
   theme_minimal() +
   theme(legend.position = "bottom")
-ggsave(p, filename = snakemake@output[[1]], width=8, height=6)
+ggsave(p, filename = snakemake@output[[1]], width=10, height=6)

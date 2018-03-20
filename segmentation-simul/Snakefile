@@ -11,7 +11,9 @@ COV    = [10]
 METHOD = ["tilingArray", "jointSeg", "mosaiCatcher"]
 
 rule all:
-    input:      "analysis/SV_size.pdf"
+    input:
+        "analysis/SV_size.pdf",
+        expand("analysis/SV_vaf_{size}.pdf", size = [400000,1000000,2000000])
 
 
 
@@ -84,19 +86,31 @@ rule calc_ROC:
     script:     "scripts/calc_roc.R"
 
 
-rule sv_size_plot:
+rule analysis_SV_size:
     input:      expand("roc/cells-{n}_window-{w}/cov-{c}_sces-{e}/class-{t}_size-{s}_vaf-{v}.{m}.txt", \
                        n = [160], \
                        w = [50000], \
                        c = [10], \
                        e = [4], \
-                       t = ["het_inv", "hom_inv", "het_dup", "hom_dup", "inv_dup"], \
+                       t = ["het_inv", "hom_inv", "het_dup", "hom_dup", "het_del", "hom_del", "inv_dup"], \
                        s = [100000, 400000, 1000000, 2000000], \
                        v = [1], \
                        m = ["tilingArray", "mosaiCatcher"])
     output:     "analysis/SV_size.pdf"
     script:     "scripts/analysis_SV_size.R"
 
+
+rule analysis_SV_vaf:
+    input:      expand("roc/cells-{n}_window-{w}/cov-{c}_sces-{e}/class-{t}_size-{{s}}_vaf-{v}.{m}.txt", \
+                       n = [160], \
+                       w = [50000], \
+                       c = [10], \
+                       e = [4], \
+                       t = ["het_inv", "hom_inv", "het_dup", "hom_dup", "het_del", "hom_del", "inv_dup"], \
+                       v = [1, 0.5, 0.2, 0.1, 0.05, 0.02], \
+                       m = ["tilingArray", "mosaiCatcher"])
+    output:     "analysis/SV_vaf_{s}.pdf"
+    script:     "scripts/analysis_SV_vaf.R"
 
 
 
