@@ -11,23 +11,7 @@ COV    = [10]
 METHOD = ["tilingArray", "jointSeg", "mosaiCatcher"]
 
 rule all:
-    input:      #expand("plots/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.qc_with_svs.pdf", \
-                #       type = TYPE, size = SIZE, vaf = VAF, sce = SCES, cells = CELLS, window = WINDOW, cov = COV),
-                #expand("segments/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{seg}.pdf", \
-                #       type = TYPE, size = SIZE, vaf = VAF, sce = SCES, cells = CELLS, window = WINDOW, cov = COV, \
-                #       seg = METHOD),
-                #expand("roc/{type}_size{size}_vaf{vaf}.n{cells}_w{window}_cov{cov}_sces{sce}.segment_{method}.pdf", \
-                #       type = TYPE, size = SIZE, vaf = VAF, sce = SCES, cells = CELLS, window = WINDOW, cov = COV, \
-                #       method = METHOD),
-                expand("roc/cells-{cells}_window-{window}/cov-{cov}_sces-{sce}/class-{type}_size-{size}_vaf-{vaf}.{method}.txt",
-                        cells = CELLS,
-                        window = WINDOW,
-                        cov = COV,
-                        sce = SCES,
-                        size = SIZE,
-                        vaf = VAF,
-                        type = TYPE,
-                        method = METHOD)
+    input:      "analysis/SV_size.pdf"
 
 
 
@@ -98,6 +82,20 @@ rule calc_ROC:
     output:     "roc/cells-{cells}_window-{window}/cov-{cov}_sces-{sce}/class-{type}_size-{size}_vaf-{vaf}.{method}.txt"
     params:     w = lambda wc: wc.window
     script:     "scripts/calc_roc.R"
+
+
+rule sv_size_plot:
+    input:      expand("roc/cells-{n}_window-{w}/cov-{c}_sces-{e}/class-{t}_size-{s}_vaf-{v}.{m}.txt", \
+                       n = [160], \
+                       w = [50000], \
+                       c = [10], \
+                       e = [4], \
+                       t = ["het_inv", "hom_inv", "het_dup", "hom_dup", "inv_dup"], \
+                       s = [100000, 400000, 1000000, 2000000], \
+                       v = [1], \
+                       m = ["tilingArray", "mosaiCatcher"])
+    output:     "analysis/SV_size.pdf"
+    script:     "scripts/analysis_SV_size.R"
 
 
 
