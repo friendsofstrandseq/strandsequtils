@@ -21,7 +21,7 @@ plotCNheatmap(tab) -> hm.plot
 plotCNheatmap <- function(data.tab=NULL) {
 
   ## Cluster data
-  CN.mat <- split(tab$CN, tab$cell) 
+  CN.mat <- split(data.tab$CN, data.tab$cell) 
   CN.mat <- do.call(rbind, CN.mat)
   euc.dist <- dist(CN.mat, method = "euclidean")
   hc <- hclust(euc.dist, method = "ward.D2")
