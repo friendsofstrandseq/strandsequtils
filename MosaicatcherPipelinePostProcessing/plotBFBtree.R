@@ -1,5 +1,6 @@
 ## To run the function load required packages below
 library(ggplot2)
+library(RColorBrewer)
 library(reshape)
 library(cowplot)
 library(zoo)
@@ -8,17 +9,16 @@ library(zoo)
 tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_cell_CNs.table", header=T, stringsAsFactors = FALSE) 
 plotCNheatmap(tab) -> hm.plot
 
-
-
 #' Plot clustred heatmap
 #'
 #' This function plot heatmap aligned with phylogenetic tree from CN data.
 #' 
 #' @param data.tab A data.frame with following columns: <sample><cell><chrom><start><end><CN>
+#' @param continuous If to use contunous color scheme
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @author David Porubsky
 
-plotCNheatmap <- function(data.tab=NULL) {
+plotCNheatmap <- function(data.tab=NULL, continuous=TRUE) {
 
   ## Cluster data
   CN.mat <- split(data.tab$CN, data.tab$cell) 
@@ -47,10 +47,16 @@ plotCNheatmap <- function(data.tab=NULL) {
   #Plot Heatmap
   pltlist <- list()
   #plt <- ggplot(plt.data) + geom_tile(aes(x=variable, y=y, fill=value), col='black') + theme_bw() + ylab("") + scale_y_continuous(breaks = plt.data$y, labels = plt.data$ID, expand = c(0,0))
-  plt <- ggplot(plt.data) + geom_tile(aes(x=variable, y=y, fill=factor(ColCategs)), col='black') + theme_bw() + ylab("") + scale_y_continuous(breaks = plt.data$y, labels = plt.data$ID, expand = c(0,0))
+  if (continuous) {
+    plt <- ggplot(plt.data) + geom_tile(aes(x=variable, y=y, fill=value)) + theme_bw() + ylab("") + scale_y_continuous(breaks = plt.data$y, labels = plt.data$ID, expand = c(0,0))
+    plt <- plt + scale_fill_gradientn(colors = brewer.pal(name = 'BuPu', n = 9), name="CN")
+  } else {
+    plt <- ggplot(plt.data) + geom_tile(aes(x=variable, y=y, fill=factor(ColCategs)), col='black') + theme_bw() + ylab("") + scale_y_continuous(breaks = plt.data$y, labels = plt.data$ID, expand = c(0,0))
+    plt <- plt + scale_fill_manual(values = color.palette, name = "CN", labels = label.text)
+  }
   plt <- plt + theme(panel.background=element_blank(), axis.ticks.x=element_blank(), axis.text.x=element_text(face="bold", size=10), axis.line=element_blank(), axis.title.x=element_blank(), plot.margin=margin(l=-0.8,unit="cm"))
+  #plt <- plt + scale_fill_manual(values = color.palette, name = "CN", labels = label.text)
   #plt <- plt + scale_fill_gradient2("CN", high = "black", low = "white")
-  plt <- plt + scale_fill_manual(values = color.palette, name = "CN", labels = label.text)
   pltlist[['heatmap']] <- plt
   
   #Plot Dendrogram
