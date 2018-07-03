@@ -60,7 +60,7 @@ SVplotting <- function(fileLoc, File){
   #read in data
   input<- GRanges(read.table(paste0(fileLoc,File), header=T, stringsAsFactors = F))
   input$sv_call_name <- factor(input$sv_call_name, levels=c("del_h1",  "del_h2",  "del_hom", "dup_h1",  "dup_h2",  "dup_hom", "inv_h1",  "inv_h2",  "inv_hom", "idup_h1", "idup_h2", "complex"))
-  message(paste0(File, "loaded")
+  message(paste0(File, "loaded"))
   
   cellNo <- length(unique(input$cell))
   cellCount<- table(as.factor(input))
