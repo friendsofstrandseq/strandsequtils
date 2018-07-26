@@ -1,34 +1,26 @@
-bin.size <- 25000
+bin.size <- 100000
 maximumCN <- 200
-dir <- "/home/maryam/research/Mosaicatcher/BFB_analysis/C7-7Jun"
+sample.id <- "C7_data"
+regions <- "/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/BFBregion_C7_CNV_segments.txt"
+dir <- "/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/"
+outputfolder <- dir
+bam.folder <- "/media/porubsky/Elements/StrandSeqNation/C7/"
 
-# manually define the breakpoints here
-brs <- c(33998805, 34185186, 34211372, 35497754, 37452507, 39578189)
-# round the breakpoints to be the multiples of bin sizes
-breakpoints <- data.table(k = length(unique(round(brs/bin.size))), chrom = "chr10", bps = unique(round(brs/bin.size)))
-# write down the breakpoints in a file
-brFile <- "/home/maryam/research/Mosaicatcher/BFB_analysis/manual-regions.txt"
-write.table(breakpoints, file = brFile, quote = F, sep = "\t", row.names = F)
-
-# get the file names and the directory paths of input files
+# get the file names and the directory paths of input files (Mosaicatcher outputs)
 countsFile <- file.path(dir, paste0(format(bin.size, scientific = F),"_fixed.txt.gz"))
-#brFile <- file.path(dir, "segmentation2/C7/manual-regions.txt")
 infoFile <- file.path(dir, paste0(format(bin.size, scientific = F),"_fixed.info"))
 stateFile <- file.path(dir, "final.txt")
 
 # read the input files
-# counts[chrom=="chr10" & start > 33998805 & end < 34185186]
 counts <- fread(paste("zcat", countsFile))
-segs <- fread(brFile)
+segs <- getCountsPerRegions(bam.folder=bam.folder, outputfolder=outputfolder, regions=regions, sample.id=sample.id)
 info <- fread(infoFile)
 strand <- fread(stateFile)
 
-
-# manually define the segs with read counts in each cell TODO: take the bed file and call getCountsPerRegions
-segs <- fread("/home/maryam/research/Mosaicatcher/BFB_analysis/C7_data.RegionCounts.txt")
+# run get_CN_NB_prob function
+get_CN_NB_prob(counts=counts, segs=segs, info=info, strand=strand, manual.segs=TRUE)
 
 get_CN_NB_prob <- function(counts, segs, info, strand, manual.segs=TRUE) {
-
   
   # set the None classes to WW in the counts data table
   counts[class=="None", class:="WW"]
@@ -71,5 +63,5 @@ get_CN_NB_prob <- function(counts, segs, info, strand, manual.segs=TRUE) {
               file.path(dir, paste0(format(bin.size, scientific = F),"_BFB_cell_CNs.table")),
               sep = "\t",
               quote = F)
-
+  
 }

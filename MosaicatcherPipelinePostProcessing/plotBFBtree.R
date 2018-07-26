@@ -6,8 +6,12 @@ library(cowplot)
 library(zoo)
 
 ## Read in data
-tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_cell_CNs.table", header=T, stringsAsFactors = FALSE) 
+tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_cell_RPKM_CNs.table", header=T, stringsAsFactors = FALSE) 
+tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/100000_BFB_cell_CNs.table", header=T, stringsAsFactors = FALSE) 
+
 plotCNheatmap(tab) -> hm.plot
+
+####################################################################################################################
 
 #' Plot clustred heatmap
 #'
@@ -72,8 +76,3 @@ plotCNheatmap <- function(data.tab=NULL, continuous=TRUE) {
   complete.plt <- cowplot::plot_grid(plotlist=rev(pltlist), align='h', ncol=length(pltlist), rel_widths = c(2,4))
   return(complete.plt)
 }
-
-
-## old dendrograms
-#plot(hc)
-#ggtree(as.phylo(hc))
