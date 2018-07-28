@@ -6,12 +6,11 @@ library(cowplot)
 library(zoo)
 
 ## Read in data
-tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_cell_RPKM_CNs.table", header=T, stringsAsFactors = FALSE) 
-tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/100000_BFB_cell_CNs.table", header=T, stringsAsFactors = FALSE) 
+tab1 <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_cell_RPKM_CNs.table", header=T, stringsAsFactors = FALSE) 
+tab2 <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/100000_BFB_cell_CNs.table", header=T, stringsAsFactors = FALSE) 
 
-plotCNheatmap(tab) -> hm.plot
-
-####################################################################################################################
+plotCNheatmap(tab1) -> hm.plot1 #RPKM
+plotCNheatmap(tab2) -> hm.plot2 #CN estim
 
 #' Plot clustred heatmap
 #'
@@ -19,11 +18,18 @@ plotCNheatmap(tab) -> hm.plot
 #' 
 #' @param data.tab A data.frame with following columns: <sample><cell><chrom><start><end><CN>
 #' @param continuous If to use contunous color scheme
+#' @param max.CN Set outliers to max.CN
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @author David Porubsky
 
-plotCNheatmap <- function(data.tab=NULL, continuous=TRUE) {
+plotCNheatmap <- function(data.tab=NULL, continuous=TRUE, max.CN=0) {
 
+  ## Set CN more than 'max.CN' to max.CN
+  if (max.CN > 0) {
+    mask <- data.tab$CN >= max.CN
+    data.tab$CN[mask] <- max.CN
+  }  
+  
   ## Cluster data
   CN.mat <- split(data.tab$CN, data.tab$cell) 
   CN.mat <- do.call(rbind, CN.mat)
@@ -76,3 +82,83 @@ plotCNheatmap <- function(data.tab=NULL, continuous=TRUE) {
   complete.plt <- cowplot::plot_grid(plotlist=rev(pltlist), align='h', ncol=length(pltlist), rel_widths = c(2,4))
   return(complete.plt)
 }
+
+############################################################################################################
+# TEST code
+
+tab <- read.table("/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/100000_BFB_cell_CNs.table", header=T, stringsAsFactors = FALSE) 
+data.tab <- tab
+
+#CN.mat <- split(data.tab$CN, data.tab$cell) 
+#CN.mat <- do.call(rbind, CN.mat)
+#euc.dist <- dist(CN.mat, method = "euclidean")
+#hc <- hclust(euc.dist, method = "ward.D2")
+#cell.ord <- hc$order
+
+data.tab.bfb <- split(data.tab, data.tab$start)
+
+plots <- list()
+cell.orders <- list() 
+for (i in 1:length(data.tab.bfb)) {
+  plt.df <- data.tab.bfb[[i]]
+  cell.orders[[i]] <- order(plt.df$CN)
+} 
+
+plots <- list()
+for (i in (length(cell.orders)-1):1) {
+  ord <- cell.orders[[i+1]]
+  CN.ord <-data.tab.bfb[[i+1]]$CN[ord]
+  
+  prev.seg <- data.tab.bfb[[i]]
+  prev.seg <- prev.seg[ord,]
+  prev.seg$group <- CN.ord
+  plt <- ggplot(prev.seg[order(prev.seg$CN),]) + geom_point(aes(x=1:nrow(prev.seg), y=CN, color=factor(group))) + scale_color_discrete(guide = FALSE) + xlab("")
+  plots[[i]] <- plt
+  #prev.seg <- split(data.tab.bfb[[i-1]], CN.ord)
+  #prev.seg.srt <- lapply(prev.seg, function(x) x[order(x[7]),])
+  #prev.seg.srt <- do.call(rbind, prev.seg.srt)
+}
+ord <- cell.orders[[length(plots)+1]]
+CN.ord <-data.tab.bfb[[length(plots)+1]]$CN[ord]
+last.seg <- data.tab.bfb[[length(plots)+1]]
+last.seg <- last.seg[ord,]
+last.seg$group <- CN.ord
+plots[[length(plots)+1]] <- ggplot(last.seg[order(last.seg$CN),]) + geom_point(aes(x=1:nrow(prev.seg), y=CN, color=factor(group))) + scale_color_discrete(guide = FALSE) + xlab("")
+
+plot_grid(plotlist = plots, ncol = 1)
+
+
+ord <- cell.orders[[6]]
+plots <- list()
+for (i in length(cell.orders):1) {
+  CN.ord <-data.tab.bfb[[i]]$CN[ord]
+  
+  seg <- data.tab.bfb[[i]]
+  seg <- seg[ord,]
+  seg$group <- CN.ord
+  plt <- ggplot(seg) + geom_point(aes(x=1:nrow(prev.seg), y=CN, color=factor(group))) + scale_color_discrete(guide = FALSE) + xlab("")
+  plots[[i]] <- plt
+}
+plot_grid(plotlist = plots, ncol = 1)
+
+
+ord <- cell.orders[[6]]
+plt.df <- data.tab.bfb
+for (i in 1:length(plt.df)) {
+  df <- plt.df[[i]]
+  #df$x <- 1:nrow(df)
+  df <- df[ord,]
+  df$x <- 1:nrow(df)
+  plt.df[[i]] <- df
+}
+plt.df <- do.call(rbind, plt.df)
+ggplot(plt.df) + geom_point(aes(x=x, y=CN, color=factor(start))) + coord_trans(y='log') + xlab("Cells") + scale_color_manual(values = brewer.pal(n = 6, name = "Set1"))
+
+
+
+  plt.df <- plt.df[order(plt.df$CN),]
+  #plt.df$x <- cell.ord 
+  plt <- ggplot(plt.df) + geom_point(aes(x=1:nrow(plt.df), y=CN))# + coord_trans(y='log')
+  #plt <- ggplot(plt.df) + geom_point(aes(x=x, y=CN)) + coord_trans(y='log')
+  plots[[i]] <- plt
+}  
