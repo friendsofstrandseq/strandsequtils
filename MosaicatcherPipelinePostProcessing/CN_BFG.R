@@ -1,3 +1,7 @@
+## Load required libraries
+library(data.table)
+library(GenomicAlignments)
+
 bin.size <- 100000
 maximumCN <- 200
 sample.id <- "C7_data"
@@ -14,8 +18,15 @@ stateFile <- file.path(dir, "final.txt")
 # read the input files
 counts <- fread(paste("zcat", countsFile))
 segs <- getCountsPerRegions(bam.folder=bam.folder, outputfolder=outputfolder, regions=regions, sample.id=sample.id)
+segs <- as(segs, 'data.table')
 info <- fread(infoFile)
 strand <- fread(stateFile)
+
+# source mosaiclassifier
+file.sources = list.files(file.path(dir, "mosaiClassifier/"), pattern="*.R", full.names = TRUE)
+for (file in file.sources) {
+  source(file)
+}
 
 # run get_CN_NB_prob function
 get_CN_NB_prob(counts=counts, segs=segs, info=info, strand=strand, manual.segs=TRUE)
@@ -25,7 +36,7 @@ get_CN_NB_prob <- function(counts, segs, info, strand, manual.segs=TRUE) {
   # set the None classes to WW in the counts data table
   counts[class=="None", class:="WW"]
   # prepare the data to be used in SV classification
-  probs <- mosaiClassifierPrepare(counts, info, strand, segs, manual.segs = T)
+  probs <- mosaiClassifierPrepare(counts, info, strand, segs, manual.segs = manual.segs)
   probs[, nb_r:=expected*nb_p/(1-nb_p)]
   
   probs <- probs[, cbind(.SD, CN=1:maximumCN), 
