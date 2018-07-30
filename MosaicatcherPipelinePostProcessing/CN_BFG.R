@@ -4,11 +4,12 @@ library(GenomicAlignments)
 
 bin.size <- 100000
 maximumCN <- 200
+confidence.interval = 0.95
 sample.id <- "C7_data"
-regions <- "/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/BFBregion_C7_CNV_segments.txt"
-dir <- "/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/"
+#regions <- "/media/porubsky/Elements/StrandSeqNation/C7/BFB_CN_estimates/BFBregion_C7_CNV_segments.txt"
+dir <- "/home/maryam/research/Mosaicatcher/BFB_analysis/C7-7Jun"
 outputfolder <- dir
-bam.folder <- "/media/porubsky/Elements/StrandSeqNation/C7/"
+#bam.folder <- "/media/porubsky/Elements/StrandSeqNation/C7/"
 
 # get the file names and the directory paths of input files (Mosaicatcher outputs)
 countsFile <- file.path(dir, paste0(format(bin.size, scientific = F),"_fixed.txt.gz"))
@@ -17,19 +18,17 @@ stateFile <- file.path(dir, "final.txt")
 
 # read the input files
 counts <- fread(paste("zcat", countsFile))
-segs <- getCountsPerRegions(bam.folder=bam.folder, outputfolder=outputfolder, regions=regions, sample.id=sample.id)
-segs <- as(segs, 'data.table')
+#segs <- getCountsPerRegions(bam.folder=bam.folder, outputfolder=outputfolder, regions=regions, sample.id=sample.id)
+#segs <- as(segs, 'data.table')
 info <- fread(infoFile)
 strand <- fread(stateFile)
+segs <- fread("/home/maryam/research/Mosaicatcher/BFB_analysis/C7_data.RegionCounts.txt")
 
 # source mosaiclassifier
 file.sources = list.files(file.path(dir, "mosaiClassifier/"), pattern="*.R", full.names = TRUE)
 for (file in file.sources) {
   source(file)
 }
-
-# run get_CN_NB_prob function
-get_CN_NB_prob(counts=counts, segs=segs, info=info, strand=strand, manual.segs=TRUE)
 
 get_CN_NB_prob <- function(counts, segs, info, strand, manual.segs=TRUE) {
   
@@ -70,8 +69,41 @@ get_CN_NB_prob <- function(counts, segs, info, strand, manual.segs=TRUE) {
   cellCNcalls <- cellCNcalls[start!=0]
   cellCNcalls[, `:=`(nb_p=NULL, class=NULL, C=NULL, W=NULL,expected=NULL, scalar=NULL, nb_r=NULL, CN_ll=NULL)]
   
+  # normalize probs (all CN probs for a single-cell should sum up to 1)
+  probs[, CN_ll:=CN_ll/sum(CN_ll), by=.(sample, chrom, start, end, cell)]
+  
+  # sort probs by CN_ll in each cell
+  setorder(probs, sample, chrom, start, end, cell, -CN_ll)
+  
+  # add an extra column for the sum of CN probabilities
+  probs[, cumsum_CN_ll:=cumsum(CN_ll),
+        by = .(sample, chrom, start, end, cell)]
+  
+  # shrink the table to have only the parts of the table that fall into the confidence interval
+  conf.probs <- conf.probs[, num_conf_CNs:=min(length(which(cumsum_CN_ll < confidence.interval))+1, .N),
+                           by = .(sample, chrom, start, end, cell)]
+  
+  conf.probs <- conf.probs[, head(.SD, num_conf_CNs[1]),
+                           by = .(sample, chrom, start, end, cell)]
+  
+  # define the table that includes the most likely and the confidence interval range for each segment and cell
+  conf.CNs <- conf.probs[, cbind(head(.SD,1), min_CN=min(CN), max_CN=max(CN)),
+                         by = .(sample, chrom, start, end, cell)]
+  
+  conf.CNs[, `:=`(CN_ll=NULL, cumsum_CN_ll=NULL, num_conf_CNs=NULL)]
+  
+  write.table(conf.CNs, 
+              file.path(dir, paste0(format(bin.size, scientific = F),"_BFB_cell_confident_CN.table")),
+              sep = "\t",
+              quote = F)
+  
   write.table(cellCNcalls, 
               file.path(dir, paste0(format(bin.size, scientific = F),"_BFB_cell_CNs.table")),
+              sep = "\t",
+              quote = F)
+  
+  write.table(probs, 
+              file.path(dir, paste0(format(bin.size, scientific = F),"_BFB_cell_CN_probs.table")),
               sep = "\t",
               quote = F)
   
