@@ -63,6 +63,10 @@ def output_bed_format_CNV(vcf_file, bed_file, sample):
 				
 				sample_gt = sample_col_sp[gt] if gt is not None else '.'
 				sample_cn = sample_col_sp[cn] if cn is not None else '.'
+
+				if sv_type=='CNV' and sample_cn=='2':
+					# there is no CNV in this sample
+					continue
 				
 				out.write(chrom + '\t' + start + '\t' + end + '\t' + sv_type + '\t' + sample_gt + '\t'  + sample_cn + '\n')
 				
